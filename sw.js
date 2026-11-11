@@ -1,4 +1,4 @@
-const CACHE_VERSION = "foodie-v20261110e";
+const CACHE_VERSION = "foodie-v20261110g";
 const CACHE_NAME = CACHE_VERSION;
 const PRECACHE = [
   "./",
