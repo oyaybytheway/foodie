@@ -767,7 +767,7 @@ Each card has a <strong>Show on map</strong> button.<br><br>
     ];
 
 
-    // ——— Kids eat free / kids discount deals (re-verified Nov 10, 2026; Red Robin promo ended Nov 4; participation varies) ———
+    // ——— Kids eat free / kids discount deals (re-verified Nov 11, 2026; Red Robin promo ended Nov 4; Chili’s and Moe’s kids deals ended; participation varies) ———
     // days: 0=Sun … 6=Sat, or "daily". Matched by restaurant name (curated + live).
     const FF = "https://fabulessly-frugal.com/kids-eat-free-deals/"; // guide updated Oct 21, 2026
     const KIDS_DEALS = [
@@ -778,9 +778,9 @@ Each card has a <strong>Show on map</strong> button.<br><br>
       { re: /\bihop\b/i, days: "daily", text: "Daily 4–10 PM: kids 12 & under free kids entrée with adult entrée (participating locations)", src: FF },
       { re: /bob evans/i, days: [2], text: "Tue (after 4 PM, app orders): free kids meal per adult entrée, max 3", src: FF },
       { re: /texas roadhouse/i, days: [1], text: "Mon 4 PM–close: kids 12 & under eat free with adult entrée (some locations also Tue) — call to confirm", src: FF },
-      { re: /smashburger/i, days: [3], text: "Wed: kids eat free deal (participating locations)", src: FF },
-      { re: /mod pizza/i, days: [0], text: "Sun: kids eat free deal (participating locations)", src: FF },
-      { re: /dickey'?s/i, days: [0], text: "Sun: kids eat free deal (participating locations)", src: FF },
+      { re: /smashburger/i, days: [3], text: "Wed: free kids meal (12 & under) with adult meal, in-restaurant only, through Dec 31, 2026 (participating locations)", src: "https://smashburger.com/kids-eat-free-details" },
+      { re: /mod pizza/i, days: [0], text: "Sun through Dec 27: free kids meal per MOD-size pizza or salad (code KEF2026; participating locations)", src: "https://dealhurryup.com/deal-news/1201/kids-eat-free-every-sunday-at-mod-pizza-code-kef2026-thru-dec-27.html" },
+      { re: /dickey'?s/i, days: [0], text: "Sun: free kids meal with $15+ adult purchase (online code KIDS85; participating locations)", src: FF },
       { re: /pizza ranch/i, days: [2], text: "Tue night: free kids buffet per regular adult buffet", src: FF },
       { re: /tgi friday/i, days: [2], text: "Tue: free kids meal (12 & under) with adult entrée (some locations use another night)", src: FF },
       { re: /main event/i, days: [2], text: "Tue: kids 12 & under eat free with $11.99+ menu item (not Orlando)", src: FF },
@@ -792,8 +792,6 @@ Each card has a <strong>Show on map</strong> button.<br><br>
       { re: /tony roma/i, days: "daily", text: "Daily: kids 12 & under eat free per adult entrée (max 2/family)", src: FF },
       { re: /golden corral/i, days: "daily", text: "Daily: kids 3 & under eat free at buffet (up to 2 per adult)", src: FF },
       { re: /cicis/i, days: "daily", text: "Daily: kids 3 & under eat free at buffet", src: FF },
-      { re: /chili'?s/i, days: "rewards", text: "Free kids meal offers for My Chili’s Rewards members (via app/email)", src: FF },
-      { re: /moe'?s southwest/i, days: "rewards", text: "Moe Rewards: weekly free kids meal offer with entrée", src: FF },
       { re: /zaxby'?s/i, days: "varies", text: "Some locations run a Mon or Tue kids night — not confirmed for this location, call ahead", src: "https://www.marietta.com/kids-eat-free" }
     ];
     const DAY_ABBR = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
