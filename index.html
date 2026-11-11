@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#e85d04" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <title>Foodie</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <style>
+    :root {
+      --orange: #e85d04;
+      --orange-dark: #d00000;
+      --bg: #fafafa;
+      --card: #ffffff;
+      --text: #1a1a1a;
+      --muted: #666;
+      --border: #eee;
+      --green: #2d6a4f;
+      --shield: #40916c;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.4;
+      padding-bottom: 80px;
+    }
+    header {
+      background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+      color: white;
+      padding: 16px 16px 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .logo-img {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      background: #fff;
+    }
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .location-bar {
+      background: rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+    }
+    .loc-status {
+      flex: 1;
+      min-width: 0;
+    }
+    .loc-status strong { display: block; font-size: 0.95rem; }
+    .loc-status span { font-size: 0.78rem; opacity: 0.9; }
+    .loc-btn {
+      background: white;
+      color: var(--orange-dark);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .loc-btn:active { transform: scale(0.97); }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      padding: 12px 16px 0;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .range-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .range-select {
+      appearance: none;
+      background: white;
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      padding: 10px 36px 10px 14px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      min-width: 110px;
+    }
+    .range-select:focus {
+      outline: none;
+      border-color: var(--orange);
+    }
+
+    .chips {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 14px 16px 6px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip {
+      flex-shrink: 0;
+      background: white;
+      border: 1.5px solid #ddd;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chip.active {
+      background: var(--orange);
+      border-color: var(--orange);
+      color: white;
+    }
+
+    .scour-wrap {
+      padding: 12px 16px 8px;
+    }
+    .scour-btn {
+      width: 100%;
+      background: var(--orange);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      box-shadow: 0 4px 14px rgba(232, 93, 4, 0.35);
+      cursor: pointer;
+    }
+    .scour-btn:active { transform: scale(0.98); }
+    .scour-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .results {
+      padding: 8px 16px 20px;
+    }
+    .result-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      border: 1px solid var(--border);
+    }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .rank {
+      background: var(--orange);
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .name-block { flex: 1; min-width: 0; }
+    .name { font-weight: 700; font-size: 1.05rem; }
+    .meta { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 0;
+    }
+    .badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #f0f0f0;
+    }
+    .badge.family { background: #d8f3dc; color: var(--green); }
+    .badge.corp { background: #f8f9fa; color: #666; }
+    .badge.sincerity {
+      background: #d8f3dc;
+      color: var(--shield);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .badge.delivery { background: #e8f4fd; color: #0b6bcb; }
+    .badge.alcohol { background: #fef3c7; color: #92400e; }
+    .badge.tv { background: #ede9fe; color: #5b21b6; }
+    .badge.format {
+      background: #fff3e0;
+      color: #e65100;
+      border: 1px solid #ffcc80;
+    }
+    .rating-line {
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+    .stars { color: #f4a261; font-weight: 700; }
+    .info-row {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin: 3px 0;
+    }
+    .info-row a { color: var(--orange); text-decoration: none; font-weight: 600; }
+    .busy-bar {
+      height: 6px;
+      background: #eee;
+      border-radius: 3px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    .busy-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #52b788, #e85d04, #d00000);
+      border-radius: 3px;
+    }
+    .notes {
+      font-size: 0.82rem;
+      color: #444;
+      margin-top: 8px;
+      font-style: italic;
+    }
+    .map-btn {
+      display: inline-block;
+      margin-top: 10px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .map-btn:active { transform: scale(0.97); }
+
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+
+    .how-section {
+      margin: 20px 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      background: white;
+    }
+    .how-toggle {
+      width: 100%;
+      background: #f8f9fa;
+      border: none;
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .how-body {
+      display: none;
+      padding: 14px 16px;
+      font-size: 0.85rem;
+      color: #444;
+      border-top: 1px solid var(--border);
+    }
+    .how-body.open { display: block; }
+    .how-body p { margin-bottom: 8px; }
+
+    .footer-note {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #999;
+      padding: 10px 16px 30px;
+    }
+    .top-note {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    /* Map */
+    .map-wrap {
+      margin: 8px 16px 12px;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      background: #e8e8e8;
+      display: none;
+    }
+    .map-wrap.visible { display: block; }
+    #map {
+      width: 100%;
+      height: 280px;
+      z-index: 1;
+    }
+    .map-caption {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+      padding: 6px 10px;
+      background: #f8f9fa;
+      border-top: 1px solid var(--border);
+    }
+    .leaflet-popup-content {
+      font-size: 0.85rem;
+      line-height: 1.35;
+      margin: 8px 10px;
+    }
+    .leaflet-popup-content strong { font-size: 0.95rem; }
+    .marker-rank {
+      background: var(--orange);
+      color: white;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.8rem;
+      border: 2px solid white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .menu-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      font-size: 1.4rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .menu-btn:active { background: rgba(255,255,255,0.35); }
+    .menu-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+    }
+    .menu-overlay.open { display: block; }
+    .menu-panel {
+      position: absolute;
+      top: 0; right: 0;
+      width: 78%;
+      max-width: 300px;
+      height: 100%;
+      background: #fff;
+      box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+      padding: 20px 16px;
+      overflow-y: auto;
+    }
+    .menu-title {
+      font-weight: 800;
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+      color: var(--orange-dark);
+    }
+    .menu-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: #f8f9fa;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .menu-item:active { background: #eee; }
+    .zip-row {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px 8px;
+      align-items: center;
+    }
+    .zip-input {
+      flex: 1;
+      border: 1.5px solid #ddd;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+    .zip-btn {
+      background: var(--orange);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+    .fuel-chips {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 10px 16px 6px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .fuel-chip {
+      flex-shrink: 0;
+      background: white;
+      border: 1.5px solid #ddd;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .fuel-chip.active {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: white;
+    }
+    .gas-note, .specials-note {
+      font-size: 0.78rem;
+      color: #666;
+      padding: 4px 16px 8px;
+      text-align: center;
+    }
+    .day-badge {
+      display: inline-block;
+      background: var(--orange);
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+
+    .controls { flex-wrap: wrap; gap: 8px; }
+    .kids-row { background: #fff7ed; border-radius: 8px; padding: 6px 8px; line-height: 1.35; }
+    .kids-row a { color: #c2410c; }
+    .muted { color: #888; font-size: 0.85em; }
+    .badge.kids-today { background: #16a34a; color: #fff; }
+    .result-card, .info-row { overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+
+  <!-- Side menu -->
+  <div class="menu-overlay" id="menuOverlay" onclick="if(event.target===this) toggleMenu()">
+    <div class="menu-panel">
+      <div class="menu-title">Menu</div>
+      <button class="menu-item" onclick="showView('foodie'); toggleMenu()">🍽 Restaurant Rankings</button>
+      <button class="menu-item" onclick="showView('gas'); toggleMenu()">⛽ Gas Prices</button>
+      <button class="menu-item" onclick="showView('specials'); toggleMenu()">🎉 Today’s Specials</button>
+      <button class="menu-item" onclick="showView('foodie'); toggleMenu(); document.getElementById('zipInput').focus()">📍 Enter ZIP Code</button>
+      <button class="menu-item" onclick="toggleMenu()" style="margin-top:20px;background:#eee;">Close</button>
+    </div>
+  </div>
+
+    <header>
+    <div class="header-top">
+      <div class="logo-wrap">
+        <img class="logo-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAIAAAC2BqGFAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAAGYktHRAD/AP8A/6C9p5MAAAAHdElNRQfqCAoOKiENWsidAAAH4npUWHRSYXcgcHJvZmlsZSB0eXBlIGFwcDExAAB4nO1dS5YjqQ6ds4peAgghYDl8x73/0bsi7ExHfiqzu0fvHNmVDpuAq/+VPHG59vffIbi//vorRCbvuCXvKQR/Pc41srC0nGQKPZbX4zNLjJS9YJ+eCb6c+605HCu15+Dj+5YLLK47GOdXMFxvYE7R3sFyyiQrtidobLHiKTHEIinGWGjiXsWdQBOaJ6zqGrmYRaJgkWLBZjkHqx6JHsfjw2RK7a4f1Zt+weX40drPxtKSkGOOAn0zS5UtKz9F+JUU0r34ILzLEJKd6TsR4SZCooK7C51WlkhPGaGcjVFKmj7XNCecNTccHCZVD7vHKnvNkq79dUh0l+wWJD+xL+gSWhR5XZPxokdEUBIMVnezzBxVI8mcAaO3WAETgFgGFiFEOnmuGmzcqYBLOYhC4xN2BRkpQpXksBlOTJwrZKVcWKQAmLOPjTZtyBZogLs4Bheo/pJpH8gM8wEDYABF2ncJ+Ui4BOSHANp4hyBfOglD84ETCqqnikyHW5HnsbQ+szrvDznNP8fTfRHQd0dWZGtKO1+y++eotry59IT3Dpkvs9Q5i88lIL+h57OCY3xqgKgigjBYzcBnxFRD45+my3B8nAfr1aHt0uMEm0WTTY0uKaquJyiFA9dLzEivDkDRsv9XGV20bKSQioR492bHi+XDN2oFkiNSO+wIJ/CIvZUepmzej5DMN8Ohm9PcwcKA/fElq+GBrDkdtExDRSA9vDQ0WSWrp0KNyLV3Bzh5oy+BsSeD4S0cuoCiXBkj+UQBwUAiCz8NS4U89Yg9Li7FgSdnTj3v4SNB3UErdFRrpZ1a2QxlfUtTfG0owTFlepDfCQFfznf+80OjeCexO8kC6duEvJEYNp5imDdyAYO+ORfAWiyXF0VPJMeVORcacPnUQsWGKqxcDdoF2aqX4BVSMj5szcrV8FSIXrk6JlWBUGspnvaj5K6ULprDUS5HPzRL+yIXpdqTstAKa1rAIhtOQ+zcI3u/ZR8EWw5XP5JDBdO6/h41mNUdF9Xyg8we1aQ3Lo+hYBVCzkG8wasSRzy0oy2BD+EgFx1P7Q4wAua+Z1ScSmkP9+/fdDv3dbv7qdu9iFmXfu6mIN1JHQ79op+dArp6MmJN9bLIfTTpz03xVZN7/buTUrfa8XvmnMBfMjsVECBx3xu5UNbwlVvrIQ3ua7Kvq42aRuiyXfFrpeVTVqfnY1Q5Rn5vGt1Ma//dtFtDdVc93Y1r3OogQgaFPkJq3YO7AvfWYcaMQ3YohARmNWcNJHBhdyKf19wt7JvK3+TXdxq7L1T+th3d9a7I9eoTWLPvKihajHTTR3h/zwRm1hxssMl3xhEeQqWX3VviHdGzRgOY8lI7gvjQr9da+4JKD/1s+jBDUrnT231Ec9/NaJ8L8wG39noS3ESaJfSajYRwPlBGDPAPS0pfXvmc6rmG2VWKxzv8kYpuIWA8CT6v0ZigVPICnu/ajrAT7wPhGpa+TQldE7WJI08Np+6T098vepOh8+0JDtLh4SOcGajq9gbSUODqrCv8881MZDv5LyA9R8fQBKbGV4LDjefAcBEeRh+NUK7kU2TmrqaHFbJXolFuLw4vFRoxnqTX1B63s95Wir/fBcFyDEGB8qsbHNx2Jgxo8Q1rx4Cm61N6NZzXR8PdnyyX95KVY94hvK9d4X7yBY5NPD0PRueG7hCQEu4CECuLR4KZ1Nx7JqhOuGqudiQ9IbLce8aojiGXBmm9YD6Yc/OoeHhGCYSB7hhyni5swuiVauOFVodpBf0Krx0C9uWVgLkfCRn2hn/Q1fz5pBe/njv8dm9b+GQwkhf75nMDJf2KghWMdUj1jtcAC5LXLL6tuceiHu9v+AvHedYwZgvwQSgBo2vdAy6mAPKArqCvHVvwS9XFZ/eQDPyAnhWkQHraCDAvSABKHgVjTJ+JTv8rJSdfQUaSb8IdiADSsUSFfpFTH0LDOoF22n44UEzsg0LnXjstEBhIGjSBr0KjzoD4U4WcleoREWvrE7NIWA3F6NPquWIgGsuBt/GhJbA8ghXQm7ovCzZBKCxEQnaMDUSLwNdobD6DbjAWXjTT03VFZt/4JiPynZGpdeq0fTfkz2Tjfsc2P5ON+x3b/Ew27nds8zPZuI9s829J1/0TP/zJDe6f+OE7NxAscZ9JZAj3MsZOqa+O9OwTOrUVJ2qmrIhZqS/M7hNcInV2ZBVGCcxHmKtLW62iTysBxPUTgaBYbwRyrbkXApHPDPD78nWfi3BXLmWHhkFOdsf32ul7WiA+rhVrY6n5ZU7PHVxbEmIgI7kxdCoEnQ4cazo8Qk/kBxgLrkIou58jle17WHVi/kYZwxdx9JwHhLXWNtU1wJAtPL95pUqt8xdfvH7x+Or7mgEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAEZkAH9HwBtSYW9K631sXPxlUR/KHfP0H0bQ3/oPOovA7e8Vx9ekp+J9Vekd+ijc8r6/9vwDiOHEnpwhcPiNXYLnkajlPzuvCT2UCU0nzdT92V6aq0KrUyhS2O/3f8A2HygrVGUv1MAAFeHSURBVHjabb1psG1ZchaWmWutPZ7pju++uV5NXd1V1YO6W90ttQYkEMgCoQEwQ4ABR4DD/GAKG8thww+GMBEYMCYIY0DCiMECZNCABiSkVqubbvU8VtfwqurNw53PPcPeew2Z/rH23ufc11RVvHr33nPP2Tv3Wrkyv/zyS/QHnwcAAEAAARAABQIAICiAgrL+U+j+xPhdIASR+A08/0JEQEQRAUBAad8zvoUACCB1v9L+EEAQAAAFASS+AEEYAMEMMBkCpoICLMBBOAh7EAYAEQEQBR6lAXYgQaS7mu5CRaT/C7bf5f7Duv/6CwLsXh/vSERIRBAEEECo/2F7/XzuG/DETwUAdHyjziYCAAIoa7aENfue/zYCICCuG19Qosk7w0ebCfb2RADE1qQCgCAC3Z0jdM8tWgg5iC4g3wZKhQOwRwgiAPGWAZiDsBdnQ7AOEHSi0WhCRBYRRBJoX4m9BbG3JsJqjQgA9feK8QJYAEFQkPvF0P0uIQAAt08JkLB73uetJoAASCCizz/wNbO1pgeIhkCJFulf2RkxGk7i0sPuYgQE+1sAAERZvwjsPlW6td9/2T82YUk3MNsSYQgWEICUgGovUhg5EBE7QMWI4poq2KUXRcYkhkyC0q1UgW9eOYDtv63lzv0ERIDjz+PdIKLA2s6VblnELQgCIoggcN7U3W0hdoZe/QRB+o0HBCDxxdGc6ys7GnX1GBH7e4nPI27SfgUhUNwq/S5u7yR+JAAgASkEJcDIDpIJZFsQGgQS0qsFj927kQgTAAqSACFp4hBC3cwXTqdpnuaFEWABRMH40RA92ZoxZM0i2G7zeCMErZ9Yu9gnd3V0itHJxleQAMM32xRQw2rjRH+HACjAcUsDoAj3Fu2fZO/6sF2qvatA6EwMax64Nc6TN0jRxqgLMAOkVISZvXgLYJUZiauAovVJEBiQ2ofNndW69Q0IiIKEaFCsnR97N+BQlMNMJHT7CRFROheBIBJ3Yfegu2cY/RfG5YLYPdvut564CwQUbI0FgIjULhskAO5Xle5WbtwC/auxMwYCEJ57PhI3Oa4v4X7Rrw48QYy+lBDPuQwE6beikIZsB3QBwQtb8Za9DfVMSFNiBYAogZVp+keH7cLBaF9EAGCRwEKEZABqW005BCQsRwNm7ty/oIS4qQQQUcn6DoOVAdqd13657qGjFxXsH1ZcZNid8auFuPbGABrXFydLd8hit6UZcXUCtx5LWnt3u6E7AbuV0LpoQfymDdceD/E6dYrFngBBqKF3HUoLIBFxsIgKILQHqMSlGwAAhEGYhaPVQEQkAIIAiw/MjCoRu7BhNvXWCw23rnIb9jCKQ7YYGhAv0t/E+nnYBwX9TUu3fVYGj097ZYkuoujWMoAE7M92AB3fN3qM/kGuedvuObfeFQEIaC0UWguJWucQfTfGAAT7gA66xQFAgoKoIb8AgBCskAGBaFPhQCbtAzvh0EWHKBC/Ka13EhYO4h0EDxyYPbDEVey9E0AO3jUVCCdJabISMD4dFkGEVKEi5YBZWo/Z+0DE1RWLoIAoxLDu/bDzlu1xH/9F7NyO9C6oP6702o6UdU/QOhNhRDwX5q0ii/WnISDUx+Iru8oqiOpe3D4KyTcBEIIDMp078wAMHJAIRSQEUAjBgnRReHyL4LtQh8V78V44BPYSfAgOQLxztl4iEjMzc1aMlElJp4AgHICdb5x3TR18YnSWKZAg1EX87YKCtTgw2lXhKmFgQIzOC6X7vbiyMX6zD03iLwki6vPRX79M+2/SWuSOTwTSa8nL2rqW9dd1YR6uv4mAyhFT8TWoJC4llADBQ/AQnHAAUsJWQSoiQgGQog9iYeFApIRFOEjwzJ69Da4J1gJwCMFWC++sNsbZJsmKdLhJSSbURpEMjNqQBLDVfDF1xWAwzBG9rC+4J+NQEGE8F4ehALdLOkYZyF3I/kTI0f5frydFMVLG3lBrH9lGF3guX0HBdXcBfeoh5xMbAYH2xMIY0picfQ0AKCwQQETYCwdmzxxcU6EiIoJAyBy9NvZJgwADcAjAgb3lYNk1wbnAAUC8bbxtmINrmL0rh2OTFUQGlQZmIQGOi5cQEdgvTo+EN0aTEuJltFlYbwBeu32IUQgAnn8Y68sr2r4/IqNXQIA2jsZzuUw0CLf+Ss6FN+uxofTHAqAGBGT+pvSxPSdXqwUR9BgoYztDMoAeICCAMDPHW5XgGq4blaSGmXTSOuXuNaQMEgEHCd43VXANBycMIBy8s8uFcw37wMElWZEUI9IGVedgA4sE4QAS4lNjX8+OD0yaFIXhENrjjAWoW0BrNhXE84tM1rGLmM+di/VXES/oeEp2IamskrbOIa8SFTznNWJa3T43MoAgXK9W9FqWLl2SCGgg3xZB8BaCF+Z4uHXHdlzajCiuWrBrIHVkcpVkGB8AB2AW9vEig7fBVt7V4kM8J23TOFt7a4OzIJBtDU1WdgcUCwcQluBBAnsXV6sweLc8OzpKsz1sF0Ibtq128CoZjvbh9ZS+38tPpDLxLXqbaQBay6o7I4mc/6X1nz2BgSCSgnQsAhBsF5wIxggX1v0NQb4NqMXOBYSDA2EMFkmLMKECojZ0A2Tm+vS4GI6Ucdy+LbAwiBAZEWYGEQ6uDt4GFwDEe+9sY+uKnQvB6yQ3aYYIwCwcAAIHL8FJcBICBx/ikwYGCYuz08HGRlkmwgydl5N4eES33G9fRADVLosYDrY2XVvua9FbTHkQUfd7QkQkJhfxAFsLn1cn/spprGES2qAqEVi0geCFu2W+/lxEJB0CKAgWdcLNgn0jzoowkkZEUTomvBy8sBDS4myqtTLBs6ujExQRIEIiYAHAEH00Mwfm4EMIvql9UwEHZ63JCyIlzCwePES0j4MX79g7Zi/BBW85BA7Be1cvluUgixEF9yBPl4FIu5CjOzXC/twaR8RVxNU9JyJkwc7t6TYQ7J8iUAuwrQLwGMNG43cHG8S3RgEAuxQ8QABoFkKmO5v7VADbDFAX4paoEwCU4IGZQ8OuCcxKJaQ0c5ubeNfE9Hx6crx35VqzWEh/wpDqby84y+wRFTN777x3tqqCa4jQOruZFUobEAbmwJa9A2HxTfCWgw/O+qbi4DmE4AP7YJum83SwfvV9QMo9tpYOoJmBWEDVrT6SLsBfD43X3AjqJ4KvtZRaALt981/Cm9fQIwRfCyKgXuVIXRKKgCCMJuNgxTWISkAQydtaXAPBhabyLEhKmBGJEVmErcuKwfHBw/npyWRze7mccfAoRIAiErwLHNj76FNDYG+dc85bawzN5zNSaZKkiCAg7BpmL4El+OBrZubgfFN5Z4P38c/AHJxz1ptECTP2CzEmHRLhX0BUkI4g2wOVSfUYQmi9isQ0OppS4obALpqL8at+0ju3OYas4YFPIKyrY0B698EBEBFp7ae4CvoRRCViG/ENC4ugECCp+dnUKNRaQrC+chFW5yDCIoDa6M3tnVuvvbJ37anNnZ0AEGMJpTRoAs+kCACCd+xscJYDE4GIzM6WF6/scER0hH2z4OA5+OAccBDg9sD03jsn3gXvSCdI6ujR/nBjoxhksII9Bc8dbgF9g1yLX0LwazBZdALdmbQO60RkDkF3UNO6N8YeVG7XdY9MylrItkr4UDqwHJ8MAaGD6ZG9Y7sAVAIozAio0+zs8BH7WivKs1QhMQsioEIWdq5yVT3Y2BSdVg2jCAjYpvF+DswIKBKYPXtvXQghsIBW+uHDR1qlJkmRFAjbxRkHx67xjUWlkNDbxlnLIQgzex8j99SkgHR29NjWlexdKodpG39Inwh0+94vpDkEu0AO0oaNIOJhtX7XiziruFafh2f7Yw5XQWAXM/R+XPAc/iwtML0eHbZwKcTAEhElQGjY1SLMgYO37AOK5EU5O6mOjw6cbbIiL4cDrTUIAyhKB+Mr169euGay0jsr3sZs0LvG28bb2lWzejGrq6VwE4K13p2dnR3sH9145lmTJqFZTB/NkQiBmVkbQ2x8t/Y5+Bi2++ABFZmiWcyCa4KtTg72ld7LM8MRFTpnLhFAsEvkeOK3p1/rXnq/it2G73+pxaOfyEeEW/wJae0hRDOv1aA6MB1WySSuCnBI2AFDCATASMSuEQnirV0snGtQUICzLMXxZD47eXD3XtW4p555bvvi5cne9WLzospKAQ2IJilixoIi0mFJ7Bt2la2Xrq69a+rlYjk/G0425tOT/Yf3izzTSpEiUkrpxLEHqULwMcxgdsLCLISosgJAlmdHaVaYJLf14uzkLN3b7u5XAYgg94A+igcEAYo5CyJIxPulW6FtitGXTABENJ6vCCCcq2h2YFaPtgoISRebfBMExV31LCAHQATUXfLqSZkQfGgqcZVG9qFxjRX2wbsIFo82t1+4/vz4wpVyc9cUI6AEUCOZVZolDBzaa9cRKaeEjE7LYJu0GOSD8XC8OZ8enx4dnhyfaI3DQZmlqbc1S4AO+uXgOQgDkDLKpKD0cnqotEryEpWiQNX8rK5HRa5ZOiy+R/fatSsgEd2IlSOANcgI2/Xcl/2gLWX15dFzJaYnouC1H6xcRBuPxFXOojMIS1kei7cgDMpgUkgyBpVAcKSMMZmdn7imFu+VQqOxqRyILJeLgMmz7/6WcrJrBhOVFIIGlRYk7D8iRl1EGAIQ9XsxmhsAASkBIqWVNlkxmJ0cHe0/un37bpHqzc1JWaYxybDWchBUhrRBJO+Z/dykWTncNFnOISBgsHVTVXkxQjmHT0KfZfTYRAvLKwBG7ireuPKpnRFJr+ohuA7Nt4cnrlcMBYBxBY4j9L8kImAGYI/57AGaEWQTFg/LE2zOILdUXhBUCJyMJm55EpyzbOezeVUtbV1PT07rAB/+7b8nH4yTckgmRUWoVF/n6E4DBhRhQaSI4wEQoCYSRuoSrVgHyABYeKK0yvLi6PHDm2/eIeA0ywRQm2Q4LE0CygMqUYbSYpgPJ2k5EBF2NngnHFxdMw9phZvy2gbmNeSDhBSYApoZYGgrlK0j6VJqQRDQ0p94K06AdMlID3LgKhP/L2D+AmTAz/nkNk1uYDqI1pF8m0/egtljNgVlE5BAWV7sXBG4S8LxwODAzoWr73jPcHOHGUgnbbLe7b42koU2WkNEwWhlEZAeyeFVaR6RFOkkyUrvQz7wWyLKmAf3HtiT+fbOlkopiNKiySQmzdNikOYDnWbB2+Ctaxpmj0De1sICmmIlZVX+xx7GiMZA0BmaEkINLnRlxpaFIbgKgHWHRPWugBBW59yaB5Y1f4HfhEqzzB5gvonpUIJFRBAkVFDuhuoEmpnkGwCIIroYDS5cn/PNplnGSy/Go6vPvQuV1tq06Wx7oX29X1ZxlrTsGRBuOQ7SsRQizi+CiKQ0KZ9kWfCOnRuOJlevqaOjI2bJkkwrneZZkhUmyZTWEZgFCRy8904ElDJtSbovu5zDRSliqu21uSUEC76K2MM5uFNW5RSN60CG9FjdqrS1+moVqyCcc9Iidgq+wWIXhBFIECE0oNLomsS7rpIrwKzycb77lLeNd6Gpq80LVwYbu8AelRYixLXgsa0GrcXlzKCQUQNzV/qS9pAUQUSF6DlI8CKsSGmTmCzLRHwIo3GYnp4uFsssS7ytARjYB2+UVogIQIFZBEhpAFFtPUvOGXflNakD/CHSTnCFJa8oG6tEQkDDuvlWEduqpNOnPe1W6b1H+zcSCeIqEAYyIAKkZPkY61PYegeECoIFk4FA9F8RAzaDjeHedeK3/PJkcOWGSnOu5u0CVga1wcgHC00Ijp0V14QQImBGSiEp0hqJFCLrmAowBApehFlAmFlCCMEDCimljEmz3Do/HMN0eirAu9sbIEGC1dqINqgilq5JJ6hRKzJGxRh3rfSqVpVR5r5WhzHcWoUbPdrX0XZa4P/8tpC1IG8taRQhA8wYa9L9+m7/TiAszCAeMEFErs9wfoAisjzGZEDlDkjAtfo7MieTSzobqMEk2b4hzgJpUoaSTIDd/MCdHtQHt6vDW276yC+OQzNHtsIsoEAlYkrMJsl4L51czDYvZxvbJi1QkTJGmLEDdDoQTgBQaZ2mGbBsbW0d7B/UVbV3YTdNE2FhH0AprQ2SEIpGMZp0mpAiWKFEBOyBPTADKdAGBVsgCRCBBLlb/nxuNbaLF7WsA87rK3gFbFN73IkFYBDqo5o2fiQNkRdgF5CUIkyDi2yXUE+h3KPRZSB9jnYS3zk4Sgajp98fnHBT6Szj0Mzu3z57+0vNnc+q5dsaTtJMDYtMb2pUWhEBEPsl29pX9XK2tPt+2dCJjMLgenLhXcXl54dbl0wxIK3QEzgADhKY2+2IpBQqZQgvXbl28+YbLIe7O1tlkalUExIAKEJFSCRJkqR50S01RATxDbKXZg6uEmBRKZXbSEpaMhO3+KeAeCvAqFNYQz4BQGOHBLZLfA207k8DRIFkAG4BtunRbFgxFJXoAshIdYzlFgqhKXDv3SCCqEB4rSSxDm+jCENgAFRGzx6/ffTVj9m3f700h3t7w/y5Xdp4CZIBoBEiYARgEEa24GsMzdg1YBeyPPOzs9nB109vff7k6+l++Uz51AdGT72cjTZ1or2jwIzRwbKAiDHGOZdl+fbO7vH+o7IotFJKqYRIkUYEgWCS0uSZKYrWRROJq8DX3CwAEdMBBAv1WbALtXEdkCRuVmijDNQGe7y05wD0wGabZQp2EGmEnKlNa9IJJhugcmGPwa2Rp2LSGCgbOTvD5RGf3qeN6yixACEiDpBWLKknKueIojJppgevfvL0Cz89MXeuvvtSsv1tId9kMxZUwtyehrHILw6BQJEAgmhAg7pQg63NnUubdulOT04fvLH/ylfufO1Sdv3bxs++PxsO00QvnWXv+9WjlAalxpubi+kJEQBwjxqQwrwosiLLJ5tKaeFIHmJwC7FLSYaqmERck/NNOX7Lnz00G1fB+yfW0DrQ0UUdqCP0CkAkBCv0Yo2YAQzNGahS3AzCEkB10B+tTmERM9jzwlIdingYX0GdCTNIAAAJXpRBaYv2sXogAKhS8PXjL/yC/fq/uvG0ya++zyfbIdlQGxdIELwDQ7yYY/ACjIjACKhBRT6cRUXgBLywFgDEidkcTjauLs4ePH54+6ce3f4t88z3bD71gtHaWee9j9mjTnWa5UabosgGRWaMShOT5JlJ0iTNsiwtN7azwYTjVgCC0IitGFDn4xjACQQyOYwv8/Hb4i8gkXDorCErj9GWzilaUcOT3AzsaMSrCjCyk+YEQo2CQtiVFWUNGBFE1OOrbEpePMb9V7DcpsElUEYk8OIAfIWTpxBpxfVhRtJHb/wWPvyF6+/bwfFFq0e62GY9+NzPfOz1z3ylrqsrL73je/7A9yARSguktNxYJCQFgRG1UABg0KA1YdCsaHhNlzsbJ7cf3fzcP3rz1oe3X/6efDDyJnFuiQBImOaFa2qtIMtMnud5lqR5apIsLcpi+1I62mLub01iXQZ1imTC7CEI0HBX2FE2CmTELTEbdblijEcD9kVG6UORtgq+gvTW4Y2ORSeCBKEBEUDVMlXlHI23BWOFqdzCYlPqKS8Pef/rNL5K+YYaXAjHb/DpbbX1LLCPhwwqFZpFsvjqxnObkhaSbOpiu2nkZ/72T8ymy3d92/smFzactb7xJlVt9a4LKyPBPmaJgoREHML921O3rPcuT8qxbgQ3nr787tHx7W98/Nav3x685wfGe9fyPF9WFQlok7Bvco0kIVGSZaaYbOaT3WS4qZJMmHsSL6AAKUFCOw92Dux4fqQGO60pTAocACK5h6WvlvTeua+LIOgIhazRBKQjk56H8rubW7nmvjLWxSCCCMyIhMUWFlu8PAwnt0CEBjs4uMSntyU4pJ7yrcA9GoyXbEtMJ5AMKM+//vHPXH/5hY/86PcJMgQHyLxYMjMBAwADE0RuroJILAYEUMrg4ePFJz9+52R/tpjX3/bRG9/+nZfsNKRbk6ffawZvPnj1s//SvvjDW0+/Iy8KCYxIZTm4eOVSORiU48lg90qxuUc6EWEQRgQk6ohdgqQom8jZPd5/lYOlyfUYaWFbDVAdy50QucMG1o78rpaO4fCLsQth5Q5W7PFVrUCEOsh0VdFq/cuKWbr2iyCgM5neC/PHeu/d4Otw9CbtPE8qgVhHkSAHH5OzL6BOIJ2ILgENYGJGZVhW7AOAB2BCAmCUIOyBHUoQ8RB7AHwtIca2AUS0EteEN1979NP//Esvv//SD/7AleZ4Gpz18+rg1sOv3TLJu3//hWfeiYhJOdrYu7h39aIEIG0AUWL1jxCAmBSyF9+AeCFNOkeAsDwRt8RkQOlAJBaRxR+8ocaXUSXSQjeCEiF4WM8qY1SnRXrcU1YM6fVc+xxFp6v6Ep7vHZKOx0pt5ImIwUKxCWf3JTQoHpMclQFhQAE0vHgbF68jAupMUCMqQEbybnoWPR0IIwGIR2GRIBKoxTWEmOMO6ys+KOIsE8oL7734525s/OQ/+uKDh/bSZtoshFM3ubj9Tr//9a/9+5OivHjjOSJSIEA6smpkleCjIMBin+ePxFaxU4BVRqOrVG4DewAQ9iACRNLMgBTqFISpd6Kr4muHqHYAL3Xxzbli6zcVEru+FDnny1dorUklzTAtgAhblFwECCQAKUTNdoHFNgK1LRTc4OwVcCeoEqEUycS9wN7rFEwOOtemSCB4DlaAhQNKEGBARgDBABIQYlQjFNlWigTRLVyRq//mT717PNIsSFqbNDG53ri4+fzW6eLVX10uztI0IUUofaW7J95jOL0d9l9lH3B8lTafofFTqLNw+DpP70Ur9xAML46o2GqD4S4AO4eOrMqAbVdWDMuRe4/cAU6tuWXFNj9fDu/wKJXw/Vvy+D7oTL3jJUxTCF4QkYgXZ5hNgBsgg9mopZGjhvoOzN4AEFAJIAIEZMcAJlUPbr71xtcfVZW9dGXyzg88rVCLtxjRstaHOIy0cwnCASO8gUAgzCKAwflUBcyJGwQCJNSJ9ilt7I737t48ev0Lm7sXjVFtjNpjZaRlccCn93ByXU+utUA/CBRbVJz6ozfB5JSNJHhE4uoEVKqyYQQ9IqEpZi5rJZbuTwFB0LFHDDr244rYe+4k7FJB7Ho0SKFS4BlIuds38d4dOnggD2/X3/hS8sN/lHQCEoQD2zmVO+IblW/IqtAjMnsD7AmkeZuJsGMIOlG/8TO/9cv/+vOHRwsXfKrxAx997o/8md+RGsXsY/cEcEDxwCLiIHhkFgCVETgOTdBGoxK/cMyIAqAQGWMKrhRRond3ktnRl86OP3jh+o22+NS3hQnz4jHmm3rzKWAPff9hCJhN1PACzx9TOkQE8RWIqMF25I/1wBMRxULtOsmx63CI4d2Kft36aOF4MsA38cAARMAkvJjLYo6jDQEr9+8oZlnMwGT4+tfsFz6df8f3QuU51ACCzKBSAMKIzqNGP5flHRCHUIiEyLk3uf7ix1/5ib/zi6OLW9/xgy8nifryZ976Tz/3hY2d8kf/5HfxPHTtJh4kgAQILt6SSun1rx194TP7jx9PEwMvvrTzbR+9QEgQYgeGIDEQEClSYDJzkafL4/s6K4QZOJ7xLQoqvqHhZWRh9jy9D6Gh4WU0uQSP2QZUU/ENkgFSkA5jjLkqTUVe/3pza9uk0ObiWlY+QKTnMa1ZWfqOuvh2JgkP78mdt3D/gbNedi4aW/HD+1jNxTlgdrfezD76PdA38CCQTgS469pSYo+gOQJUgIQMDBZJAdNP/pOPX33H3o/99d9XbG8I8O/7Qx/+e3/jZ3/x333++3/oW4rCBGaAgNLS7CPvVCfqEx+78+9+6vXHxzMnwVv/679552uvXPtT/+07kUOf/iIiEhqjfO1HAxpdyE2Wi68R1epUAgKVROSBZ49gcYAIwS7U7ouACpVGUhCsKANAHTC4vtvXTczrgAP3CcsqIVxxc7pWp7ZtpFvTpHk+47de1yYPzpvlDG4eQ1FAtQDrwFm2jm0NIQB71BmQkWCBRiDY5foi9T7YU1AR9gpUEXjwxv3gH/jwyx+4UuTaHhyAYFJkf/zP/PYf/wcfd54BAoiP4BiIIHsOXmt8cGv64//3Z8ud4R/6E99y5eLg4YOTn/+5137259+4frn43d+/25xZ1cI32DePEkqRB4AALKC6jjoQII3ZhKupDC6gyURYdAGAYpeUj8EHYN/1/wgRRtJlF8y2JNHuY85lf73rwLZzb43o3lbVsYPzWs8jqBWfHsHhAXtLZ7PWetOpeIfWinehaXAwIhVJf1oNdkN1LK4GU8TDQUCgeghuCZRKxXCQgGwiaJjPvuv6s8Fbt6w1CSAH24wK/ef/5+8T54LzIF6EQSwwowRghkzff3R2452X/8KPfVc5JF4u3/MtGx96/87/9GO//ku/8vb3/7YLWmEbvHW7mwCCgD++Jc0SULXd3W17U6DBLswehuO3UBlISix3WrYbgNil+AaUae+iLViulaa6kuu5LK9DMQTbqEPWyt5yvhcCYL3TWACUxsNHmGRsa2Rm7yTE9hMW74P3ydXrLdjOAU2u1AXxDQYHpGKXFVdHFBx4I/c1TAl2UkBCy+7tGh45egFh0PX7c5BlFQM/EAZ27brmgCBhYd/7nt33fvCqosYdWgB2zm3smD/93733n/3Tr9sguSZxKBGPFUCFpEA88/KY7UKlw5ZBs+qaUGp8mZsFhAazayot/OwA0kJ8LfN9UAZ11jZbyDnqMnUsDuyLt7EpbW1V667vinpmhzzRgrJKy5FdQxcu1kWZPLhLxUCchcAQPHgvIqGufDkqn3pGGttpEwiiwqSQvsuVHTQz4QBnAvuCUsHde4IAwhgcMMshcwpIpNGyc16VRNHsjG1B1gOHCLgokGA5ABGxsGhNfsbvefrCX/uzF8yx91JBJoBWgjCvGm0x1OIWkAzaOgYyyupQwmwUy1GhOWv7Hk/uuMWJvvBOQITzrVNtBEcaRBBsHw6jPMn/0qtSGHTNRsoAt2i9rPoYGUEhgCJlvvd31z/1T9Ojx5QVsbUknqFhPlPv+4De2YW6AVIrQmpbHW5TVAgWggPrsGmAAwhgiPUDFGawHr1Qdfxv/snninHxA3/2t/klBusIArWcCkYRiB2DzNoQUBKaABAAFSzysD/OOZeThdRzxiXsAGSNBJYgEkSAUIS97RppY0bbEYFQoYCAA18jOzImHN8MixO99bTKJ8BuhQitjM1CGpAg1Ah0vnHinI+GJ3mOwm0QIrLOWQVgRBLXJDsX8I//981/+g/ylc9SU6skBZOID04g++BHcaV4sJbFd922HPeHt2AqUAtZ5m0xkwAERDEWIQAododH8sv//q71H/+dP/xssTcW0BhC6xxBQIlKAednv/mvXt19evcdH7zuvchSyd0B0UgUIS8hENQmzIdwdQ66EhZmBkQkQA7AIapEtOcTakBiX2OowVfiGgzW27lgqvdepnQAbAVI1ikD8eGQxmwblJFgxduus7BrPu8iOd0HQKssPfi2v3jlQ2LO3rJD2DamLPXv/2PuI99lP/fp+utfpMN9np/ii9+SPf+CNA2SWjt2qV/YAIJk0GQSHBqCa0u4JbDQAoQIkjJeZRor7wV2L02u3NHu4Kd/8tZ//o/33v/hzZfet3XxSlEME1LI1s+n9s6t2Rc/c/QfPnbyHR+p3/HuC6AzOFFwFoQPwLMEBudFPNcox0p2QEQ4CGpE0gAo7IEImIEIFUmwPHsIdinBCxGQRp3T5rOUDkFAQoiUT2yPM+rIdiIcoJkiIfimq5vENhBB6V8GekUB7lutWhR0nU6x0i6RWOIKAZeLZO9S8kN/MHzv9zc3X22++Jnsw9+ByoBnxK7Lcf08FRYQUDmkGxA8oIZige9gnGvwRpTgmHCkQQEBASGhMgS7k2R+Kj/3049/8Wcejkd6OFRak/M8m/PJWRAiFHn+W25AnrMV0iJ1FRER8aElqFvL3oMPElpGGccKZ/CERjggabYNH70mzRIHF2i4R6YAZVrkTLzEDD92SOLamo7+GVDcbNWG35HHEBC5TR9iHM3r5uh7Gs8zSxHOgyAcVVdsA02tkrR47wfz934QbCNNjUSyzm7qA/O+oza/KkIYWTWJgl0v6FtRDlSAAKAAaXu31IBKRGO4spGUWk+t338cRIIgoKJRmQQEruHa8xfAZGhrGDSQBDkzAMw+sLdsfaAKy2Vwnr0XACSidAyYSHCRryMcwtEbvDxTF1/W5ZYIR+hVOLTaAzH7X3WIR5fKPX7fxnlInfRQn+JJT5DR2JKgaZ241wbOXctQn5/3+h9dhIJCJOxx6dqCOKk1ogJKZPe0WHZ0Hg6GV0WPpD4RpSlYxBSIgQiFRRxGiQkXbjy3YXJyLnz3M9devnxBC9/bP377eLo5Hgbvv7x/fGtZo8jm5fGNZ8fQWEKBzKlnmnCLwhGKFwkO8ho3TtksOYTgPCKRTinfASEQFmECZHvGs32187webImz0OsMnGMXRuUfWT/rYtfnijS20kqQdt23JwoAQN8LLmvg3RONKz0lTLgrESCuk31XPUXxn1a2RBiVAZUiorgKgAQZ2FF5OZTX/fQhxaMBESSJLSAYEMCCQrcMN17Y2Htq+LSb/PD3fbQhJYtlkqTvev6ZcjxsFvNnbt37qddvv/Jo+tt/x7PDDfInDSFLcDjw6hkPG16WELgBXQtX4kOwPjins0JnJZaXxFsQJcSsQGzFgU2+Ad63lyHUt0O3Rwsq0AbER2ASYkwsbWWtBzpwXbqgs3qk49Ha1y2EgNC7aEHB1vkQsc5ibgrnA5Jeeqaze4zVUsom7Obuq/+Xff1nQCUSgdiYml/4MIsE27BtxFlgC8F2pFtGboQdJvgj//Vz3/n+l+hbPyKXr4Iywws7k3e/qC7u0Xi8szm8ovTWM5s/+CM34GwOEiQ4DJ6dE3A4drK14NGSVSPBBe+C9cCiTELlDqST4GthD8ELB1BGiES8tNo2JMkQQEPfbagT8T7cvxVOT0AnIAwcMSWODSQiq+eycrpyjlyuoQ9DzhUDZVUyRxSlwvyefP3HYfc7zNPfJ37ZJTgrtmNLBWlFWMjd+3VYPJDqSL/9s266dOPnzO7zYmtBQtfoyx/mN5+R41fbmr4ImDZoQ9EgpAhC3bx8Y8LzbV9OEB8LSHrpIj73vLzxhiYUZpvin/qzLw6yxs1qAg/Bc3DCXkJg69l5di5Y652LDhpNotKc86sgibialVJiwDuVDVU6DLNDysYQBNADR4IDgAAqFeYz/+or+uw0PLrv3/eh9F0vi3NAAs6eVwF6QsdtpRcEAPp8bfCbepUR/OPfgIeflcWhefTJ6t4bdO23qTZi65WE1t9RwOR8/Bq88v/oxT1xDgGxWfLiOGZGgijsVLaJz/zucPCq1E61JVFEYWQGxUAo4Cgxful5YfWbr+nFzJGii5d4eiazKTf1dLp437fIey7XbnqGyBA8+0a8ExckcGhivOHY+eBCcF4A0qLEbMOll5PQCJNw5KAGANLji376EMK1lhHg5iulOVL+tVf0dArVQoVQf+7TdOkyLheAqHZ2oyYLrrH724LseVxJZNVn2C5JWelCEEZm6ys/k519RcRI42S4iYog+P7wlCelJgA4QLrJpwdYH4EeoF862km3ngVXdV6GxC2Ta98b7n6S7/4GsAYREqEkiSxCJEJBQI/U+PmMjvdZUGtDx0dcVTyfL0/O6jAf7dS+coluYroI3kljJXBwgZ0V59g677y3XgLrfGjysk6vC5biLYdUgmcOKIzso2wKMMdOgx4/AERxjRwfwvRMqgWKaNfwb31SNTUfPfbvfHf2/g9J8HheNQNX2GvoLUNr63ytIBhBIWFUKT3zw/Us4PIozBb4/O+iFsHqmb/SH6ctDT5YVe7QR//qgq65o4Pm/pSf+QE13mVve56rSECg5N1/EspL7K2rG19VYblka6WpwDXgG64aVXgXjvzBsSzmwo6PDmR6Ys9OF8endTbNJxpCCNWC68ovF6Gu2VrfNME27FywzlkbrGcOlGamLL3erPUVYc/MwiES1yPY4JenmI6QqBPokJVVSIlzUp0BM1tHhPjwAR/sU2PD5z7tF2ex+UxAOpRjvetttQT7pnuUHlhp29YEicBVybPfZweX69/831yRFC/8TrDzCBec643tCdggQEpclVz5AP3B/9e++qvu7heLD/xBsBUgddV0QUAJlR5dT97zp+2n/mZo5sEFnQYKrLQW7QERgFRKsjs7eU2P9zZFkwS2VTU7PD1tjvHKrCzHEjxbFvEQgoTA3nNgcZ4D+8b5xguL0iYZDEEVp/AUQbJWZGpBJm4qIJ0MdiAEIFpvGARhNCkWJd9Zgk7AWXCE0AiIn89cUmRKg0SEWfBJIUc+x0aK2qTtrl+pV/ZlcERhSMvgGnCNSvKW+vdEl2wnRQaxQQpQgiMykJYCIs2iE13o+/gFQSQ4VEn12s/aL/5jthVopZNEaSJDREoQibRdVAcfd+ZgO0myEELVNPNwNtu4t30Dt69sZsMCEUBi1hckuNiMzC7YxgcvSis9HCtdHPkbobyRD4fpYJwUA52XOit0miuTokkwSSgCQ6iEWoHBmMtgnjevfUN+4d/rLOfGIqIghqqqDvaT3/NDg2//DqmWqCjGzrAmWnOehxeLs9LrauIq21mpSSpoloSIJgX20MbR7QMHQCAtWiMZIC0cW6MYkiFLg9VUWir2+m9Jq7yHKHaRPf19wmK/8pNiz9zSBgVKAWmFWjM50jR4d3P0ylv+IA2BbFr5cj7ewcG4VFoF2wgLCkfxCQ7MgZk5WMce0KRmOESVPppfsNnOUCEprYhIKSLCdXw+Yl0ty7M7rqInbKy+cq0pS1nM2TMvFqGpXVGa3/PD5Ue+TeoKW72n3iC98F9PZpQ+YYFzLSn919L1MVLHGCNCAYGAoEEloDIgJX4h84dhdpdnd7HaB3sG7DCZwLXfqXdfwmbefVjXzi8rsQYEFLvMrn0nim6+8a9l/tDXwUsgo0grpRUQmVSPn67PJie85AwkK3Q2SJJMc3Ds2kZaCIGDCHPw3Pbs50U6GFqH9483Xbo9SDUlqdJGaaUUkdHK5KgTJMQIQuB6I08HqBFKCKocwvVnql/9BR6MYXtbP/+u0fu+xWxuSbXsyAMiAEAkQBgcnENEu2SwlzWOMNtalEIrnKIj3aBKQeeitHgriwdy+rqcvsFndzHUqBJUBsMCmilWZ9gcu7MFv/8vZS//XqnPICpPRnpjD3oxY/Diaq4X7Fx98IZ/65dkehNCFUJAFFKIRMwCLMF6b4MIkCaVECkFItzq2AkEYR/aGEjptChNmh2fqXvHmzTYHW4M0+EkH07SwTAdjPTogk5IgUOlsdhR6RB8DaTaWgsRIPGaE0Wt3cmJfeumufaU3txUSSK2AedaSLO1EgOQACK7bnnyCiA+Z+guHV4FfO3aY1QJmCEQSXMSjl/jw6/g7A5yjSbDpJTgQRS4BcwfYH0IvgLvAIns/OyRy/7IT6XbV8XbNkNFbk8iZuCAwYlvpFm66szP54uTh829zyfz1xI6EwnBeQ4i4Ek6vmY8wCj2hDPE5dtlqaS1ShOdJFWt7j7SJ3YzH28Ox4NiNM7Gk2wwTgbjZDQxp59V9T0Ui3bGYPji7zDPfT+G1v+2OdqajImIkFJkEvZOXAOB11gCq4aJ8/pQvBJNEpE+M1zLUjo5wgiOkMZsi/2MH36CH39GZncREzV5Ci+8R+wcprfg8CbOHoCdY2gABVC1bx1YVILzR7NP/3T6e/+iNB6VAokVjQggMAq3PgUQUQGB1mk1euZoSTC7XaqjMnNpIoF1aKLegwi3oEKH2gASEaHSWmnDQMslPrwLhzMD2eZ4c1QMB9lglJTDtBgm+cCUQ33vZ83uNdz5ENz7FNYnihv7n//G8qwafPgPSX0GZBBFhDt5H2zlT0Ngt2izOiLp4XqBNU3FJwTzpO9zQGG9atDEdQeOCALJAITdzX8pDz6DJqOtl+jq9wiAHH6V3/wVPH4N3AJjZz2hkBEObYjDsZTiVKqbm58M0z9GSRqxVejxphYAF0QCrVEnKsl0XpajMfrLU0ge7Oey/7g01aCQPFFKKaUEo7JYWGHjIuC9zM9kuvDHM7V0BaWjwca4GA+zwTAbjJLBKB0Mk6LUox06+awZjGHvo/ypv0HNkQAJg86L6Sd+PHn+u5LBRCSAykAXAr5V8rGzlsZF2FHrulUs/Ypdxd3SAiDSdh62UUUXR/fOuCuCMyQjrvb5S38b8y168Y/j8KqcvMU3fwEf/RYt9hFRSIFOgRmBozvCKPMJjNERswCS37/XPHozv/x81Hhdh6JaeWkiIU3GAOeGGQFIGZPn5XCwON6eHx0eH52ynZM0hE4TK9XiWiGI9WQd1sF4TpQps0G5dWGYD8okL0xRpsUwKUc6L01W6DxXaY4nb9IzHwxf+sf67B6kY5EAwSEpPnpU3fpa8tK3g87ZzcPNn4b5Q9E5brysr34Eg40icX1VBWWNNHpuLcu6rimsUH3Sqw6rHnkDQUrZz/mzfx0vfIBe+GN88iZ/5m/Rg0+TWxIpUUaYIQSInasdR50iR0e41QpBdg2E5bJ++FayfU1pLTrpO+m7SyAhACUoqYo7SWmVpDorknJSbO5uXJ41i1l1dlYtqmqxrKplcC4ELyyARJnWo2QjzdI8TfPMpLlOMp0VOkl0Vpis0FlJaa7TjJIMkCks4OQVPHlTTAFsWyMxByf26HEQ5KNX5fV/oXZfBnb4xi/x8p9XV3539t1/kZiBBTtuylo6rdp25RU1Sc6BTJ1AnT7PfMYWx05L/vo/QhZ6/g/5ex+Hz/5dXR8jaaFE2AP4NuPoP7gVVZa+Io6KufLVmaBIffSgWEyxGBIpIbVWCaLY0hxbJIFQoSKVSJrrrEzKxjdVaKrc1sOmDq4JrvGN5WDZd4rEgqAISZNOlDYqScikZBJljDKpNplKEjQJ6ZTSwldTCA6Wj5FrJAIQDCzCYr1z4Oaz8ugufvXvpy/9kFQVPPgcelZJhl/+yXn59PhDf4CrKVJkcPSBG0KxDYCweIgcT0LGNQOvKiYdU2mNCi0IqLiZy91P0NbLPD+Er/xTVR0A5XFKRPRBbWGq7XnvCmAxLVGCwmHpT+/Udk4BcDmfDecnWmvQOnJIVrxtIhQGUYgkpBE1ai0hRZ1Q8JQN2DXGW/YuOCfBRhUkCUECR4kAiQ1AqEhppTVpQ1qj0qiMNga1iX9HU/DyBNiRDZFPAxwkCAB4z86Bq331yq9M6gN+8AV89eeJlABBEKX16ed/YfCeH1AS4BxzmUFEmjNAAubO8OsQB3blLozqBl1LBbayHKhMmN6T43uw9T44/gadvo0qRbYgKycFIK3qGMeTgjEIBw42+NrbZVgeheUcQXgRCBvxy7NQjigUqAAoAqzRTZEgxXdrJYZEgQqotHAgDhLyCDEDe2EW9hKTwO5obVt0iASQSJHSSAqJSBtUSkiR0rEVS9iBeBDdtjGzCLOgcONrB8vFspzd3xhN6e1fFdAsiN4DAjOE6X13+ojKAQACqvUhH+hmXZohfflkbU1Ln4trgHW6QZx/QlxPoVnI/B7kEwwVUhGV+mIavZJYFoYQfOXsgusz1yzZVeAdeB/bacDV/mB4eUunbBsOXsQjMGIiSmNUtOIgwAAUGRMihEKACkgo0sCCF0BRKaICbsT7ljbha3F1L1DdAlykgOKfBACgtFYpqBQQSBsMjbCHEPk3MUoUBBArlaNl3czOFm55lF6cgAQMAgJIuDwOjZfm9FAbTQmiAsAeeOplXXl9CELnhXkliLfGJl3PzwWAhDWe3hSVEGjggNziIf3MELa2PmwWB2FxFpoavIMVYRRE2C89HKSbg0s3BnmGBEiIyRiyAYcKm2NmB3pA+ZjQsJ2D+DZijaLr7QWz5JsQGj74ipy+Amf32C5JFTK8DFvv0xvPYGjY1nGVASEiIRIQAhLqARMEO0N3KICcXGaOIDpH3bBe4iFYXwcThCvIHr5hr2YzygiUggCzR83sUJrNYnFymJYDQwqQkFpJbBGQKKgOHaIj5waf9HVxbCtjiB3mRAAAwVMysjRI5wdsPw9KQ9dR01lZEPn0dv32113wqKI2uYhnsIwWyJKxJuXJeHL54uaFrWxQUj6hYiMcf4kf/RYu75E4sE0QwMEV3Ps2uvodZEpxC0Bq+cQxCMo2w+GX+eb/R2yVNkJIfkaHX4JHEm7+jN38Vv3yHzbDi6GZo1LYcqEEVSImC4ef4/ufoOpA3AzsPJitMAetE/BLiSewiARBheLFivFNI5u7j76ewNfqcqx1Ak3FizOoljDb3Rk0ta+XOitR8Uqsdr2fqucIdajZehTXrmhcdU7EsQ4Ok1KyHagOYXyFfUazR0C03tGFAKfHYf8IQXMdsCLjjIEsxTxP89QUaTksR8PBcHNjsL2TbFwycCav/H1UqDZfxO138OlNOvyadgu8/5/l3m/4V/4tfvDPmYsvSn3WtdEBJINw+5fk8efNcz/C6SS8/vN08FlsjmInoAKrHv5y8+gL/O3/a3L5JWgWoBQIoynYz/2X/qHyM7XxnNSntDwFu1TugfJWir1QLSnibRJbMYUdN2gweD3cPL32nrOvfTZHFwJoRSrl03xzsHGBgg3OsrdkDAAJJkg6soKArfTaZStCei/238azuqePIna1Eg6gU8kv8OIb2JxK27HOrbR35NwTFiUumO+6LN0cZ6OiKPK8yMsyS/MsSVSaZelglI2G+fb1HB8m+1+iZ34Qtl7kOx+H136e5vdRGhEUIFJ5Mn+1+aU/23z3X0uvv1/qBRBBsuHu/AoefdW898/5k5vhP/9lffImqg5XY0Yk0GXm96tf+TH7A/9HunWdQ4OmYD/zX/rbevICFO/jN3+BDr4ubDvShcLFo1iLB1nFpq4WS0mq0qE8uP5+p15+QWbz6eP6G6/N9sNk8/rTw9GYlG63WTKQJBd7JvWBsEeVUjKEZIjBoasEKcbH2BbGsW/41tDK/6FQgsG2fRlKyfAqP2ZdnSISIIGElfw7ChIMx0QJh8HGeDPbHuHWhp2MZTjyDGGhn8Jyy6RGj/dyeZzPv6C+9S+x9fwbf4VOXkNUqKiV8oxt15SmyXL5yz9mf88/MJuXkJJw9FW49Yv6A/+ju/tr8Ft/K3FOtMbYLcuhHVTlKsAkhf3Fr/3v5of+FiIyBPeFv2923ieqhM/9XV1PBTVI6HPi9X6IOMNLHNuaKyo2Zf+pPWNe/JPy4Avw6PObl5eXb9Dn3xjZnYvFaKSMJp2Lyf3BF+TgS2hPEQXcXGzlKZHBs3T1u/TOc9AsVgp5bdzQAiS6G/5CmIygOgIRBAIJtPFUkEQLi3C7+lkABFmEgAPlW+mN635zi59953jzytVsY5eyAex/gQ5fOzu6O5v8KG1cMOiLg19T3/rnw/JUfvMv6/pUKAVgCH6dNAbBCyUZHk5/9e8Mf+9fReXCa/8qGez5O7+BX/6HmoOQxmBXKmYgrWqJBMqH9Pgziy//0uBbf7/96k9ok4kZwqf+pgIRVMC+vcFuOpOwIAkwgwAKSQi1haWH3eRh8uJfWB7cN6/8HCoTfNDSPKWbO4lRaQZmiPZEvvHTlGS0+U5YDmB2DxdnWJ2Cr2T/G3zrP9ob/5V+6Q9T+4nUCSG3GaRuh6OxleoI2LViRuz1+JI3m4nsA0cGmUDXU9AqVhfJ+370XXTpXaILrqpw9tg/+AotHis0iX1kX/3N7Dv/ePbo3+nr38Z6JB/7MePmojJwDUYJna4Br70SZ6kY6XufnL3y6XxT68W9gIpe/4foGwGEYGOZSQQgyIovLyCe0wROv/DztP0UPfgUPf3b5Ev/UIVGULV8dewIXf1sq9CPAmLxvqrRNYvNjZ1wckt/7acUikggZPESFhXYhRWj5jez5dfo2vewJPLWr+HjL6OrAZEFSQS10Zr5qz/RHD/OvvMvYGh64lZfmdRdJCjArsM7GEJQ5YbNdqV6HOXa1kYb9YqRwtNH7mQfmymFSgEoIgEtpHSaNm++BTc/tTN4xPpD8pm/pxaPRRcQGlSA7IADaM2CEHgFDDDmJd79zM/gjXJy8Vl/dkzNFFQqwZIgL301ddpgupEyIUmn+xFYZ0m4/9bxJ/7ZpWdH8OC31NldUTkE307eCUwsoiLShd2UBBQXABACz62S4IaFglv/SfFSUMctH6w0yzBdhNHZrYl+E9/5+8PDV/GNf0/eIyYCGqK4BQh4y04oKc0bP7vMLw4+8kdleQqE68V03cfFgCSr8T8ek0KKKzL/mtIxaRQBhCCdmJigAFTHWkBAI+Xt5ow+FGF+unRv/Ib+He+29z+pDr4mKgVvgSTM7cmt5XIhG3t6dKWMQA1iO+nKlHnzpc+57AqWNT28CagleBB2M/f2V+rDx5IoufFOt/VCKZGOIwIglBoIs8XNz+kb7/aHtwET4ICAqKA+qh/drJdL2N2jrady0RpDr91FAAJezhpJUymSEGbHKCRR2Y2ArT9dqPnp8eWn76hnf8S9+TFz+9eESsFU2BFGfRrsh6qItaos+PM/WV/71mz3mvgG1oR6qF3CcbZV31WEColkfCWIXk3Bi6/grhsOAUkDqrYnmwMED8KCHGpezl1BHpaneHoXyKAEIJHG3//q4htf4te/AV//lJs/rKOsVZw3EJGHTHFKHvdfB19FjJACH96xt96WR6dyax/eeMXZBQMhBInJqhDphAY5wukdaCrpQje/9G9+sX7163DrTf7G58LswJHuiq+dphdbOKlwMiJUQZxtObpBQMAvw6Op2Ta3R9ee8ne+oG//OqgCgkNwwGG+bw/erBaHdRtTxzdE0v5s+cX/ID0A0rkP3bLButYH6SiSiEFtXHNYpnjW0kJ64boQi9/Yno3MnWRlDEx4cexrR+PtAo5uY9XECJ8UzY/c3bfl8UKmQEklk9fdi5dzjrEjIhKISF5iQjZ4307iFBCW033eX8C9pKTCzE/O3nFGmxsqeI9E4gWYFWBZENgauB2niQTTB829u3C/wrlONqb+6gGMbyiwTjCaUgDAWZnV8NwwqriG1UDYwNUcTxv7wWdHMD1Wj18ByMQHVEqcf/iN6v7bvFhyUdBLH8bBbiJeAAVZdG7s7S/66ZFO05YlEKen9hSldjd1mSlKUOO9oLfEM7AAM3DbWN2yFwJjFP0TQRJSQiQc/OKxPbzPjdd5LuJ8Nz2IRcLsxJ8s5K7KZ7sXDnf2XjuGYBEVtjIkkbmngTDKGUjUSBPGesmPVFZc2tq9sVdt7U6tQp20qxLjkwalsW3ObnniYX7k95dwfzjyly7uTzZPrIZW6ambWyBia55bnox1V9xrzzASOToO2dDs7mb++HY/uoKQj+/a11/hm8fwRmW+eof3D4EMCUc0kSnRYfa4OXogcdyXcGyE07jWK9APSYyeWBWjZnhFjm6CBmAGPDePs5eEQwyhYVtLPeflVKoFPHjEDWKaMHuOVdVWVMPLjAkvbOzsTMikzZQbplx5DrZfYggC7BG5k+sDQgka9KjY2RgNR2WVZTg6g5VyNqIIB9CAwpEb3MaN3vJJkk12NzZGg7oocGMKaCCEVlxbAEHqChqgzbGBxnZ0NWERJfLwRC5dG4JfcFPFVDLqz58chs8/4un2Rjkqh5vzjfdcE3gMZNvmNcZQ2/pkP93cU8a0BPtO1ritfUEkdXYFcWWM2rgRDn9TYViJ/bd5eqTyUDO104d2PgXbQAjIQYDl5EyqgWhi3/J3otUkTUkSLIaDycbEFKUpPQ1q4el6KaiuJHcBqeW0AAularCBaZ0ON0eD0WQwqDYvkfgDjEZlQeSmChqAWEJce8yUYjYmSdPxqBhvbpR1deG5QuS0HTYcGxqE55WwovGQxNaAIG2fPkjDZ0u8cTkDW3e8H0AkFr72ge3f9UxpKRsOy0tPXxjUD/jBDJWSwEgUmhA8NfOprxeIA4VKFCKyBjnX/tKRdFroFDeuO04MLxl66g72IkqkZHYUXv2aaIOZEU3iWE6WcgeyUZlAY5EZIMoDingeblOZB59lw8lA5ZON8TyZlPzoANtSraDIySnkS85zRNeqNTHjU88mlx0rUyZJvrvbDLcm4fbbLeIegEXOTiXb7cTLWEAkeNy9ml55ILXOU5Nc2g7b1ybh7VtIKh7/SIAsi0qynEYlifUtp1YEUaoFV6K3JiS26vlVCCIBEm3ffV2BYlSB9x/w/BgBxYf429WxZdyol5VbzpUyiERoQJGWbqwQwpqgZgeRqI09n+4Kv90pOkqso8SBdcKQ5BgY6gWcEM6R5ipzaWG2hwO9aOo6SYDjUYnAHtOJeeml8Lnj2mNSwuLqC5fFPwDbCJoItCDz/qGUe7C5A8JCCgGRneTj9Hs/BA/5LN8pd6+9EG59jFwtlMRDmOtw/xEPr3pABaG9PLGsS/39H1V3mird27l4/Qo9+DzaClQS3SCAAMusxnGpSYOvA3Wq1IRyehIcqDINbD3KWmcDoTjvDk+iCD4hAWmJIC3gfL9ezLUrhuJ8qBeclWQMiAIh3UmtrJoq+snVhKCLiRtd5dO36FxRNVpZhCEr1e6O++QtNR2OytFgMMy3hkWaZ7ic1fO30y0C7kAGBO/luRfyLVvNi+nk6rUyYX71VVKG2zOIm0U4OuL8ob3xbCL9paAEwVK7Z4eHMCj4rdfw+A5q06bRJNXUPzriq2cNSC4ixO1sZvacG3nn1lxGp/72m3B6F6KoE7TOAzzMGhkOFUCQwMKRzSBIcDoTJCH03rftKp3YBpIGIpJA7fjd4EXQVTI/8vMpCagZlDliaBr2Vjjqu7HuiTbd9Hfp5dEZQJkEN57mg98kHWcOE8AaIsiCBscTGU40bG1e2BjkgzIviqQs6sXw5PT2eCMwt12DgoAswclGXm0NDsLJmRzeIgn9HGQJMj0I80Zu37If+aCOLTnQtamLs3zwCB/fA6UAdeSeC3Oow+kjPl3SyWGAVn4RxIc4HkCCd0eHsP+AUIFKIHDr95gBRYIsLG6ONLBHbs8pYQSW0zNRwMAs7THTImrVia2mXhlQrcK0uEbsUuqluEBKwWkws53tkSIBluCjkjUCaJRzUCoJMHYiJqSAA21c95hrWAhL5OtKN3CZBZRSg5Hay13IknJzUg7HeVkmWZ6OafrKN5rpQzPIJLBwl/kCcGV5cRdEUJnYgoosgFDPw9G+eKIHZ3D8wG5cSYKLVeC2o4mIAFMAkW7vI+HiOBztwyniw0dBzpykGjzH0YWRTUiCoNJWO7LljLeKeYGhdrg5EHC2zxIQAYI/OZO6YYhamBFOC6ITODnwn/6E292gPEWlwGihVpJAAocDVtPdKxcnG4o0ErVOQLgbHHmue0Uo9iF20t1qtOv1hvCiSyTjsFUEwqjbko7UZuqOkdNyWIzH+WBksizT2fTxc4f3b+89m3QoeEueRgFoy3qxbgeCyMFPH/nZmXCiK1XcvjktBmiGGrjFg6KYTd8pBQSkYXFojx+E47nYMj92/vCO3XwaOJJDu/eHVrZIiGTljkCYJViovYxzAR96HTRA4EqmlSwdgPVRCj1WPdjD9qXUav7ibb81VKkSrQQQPIEYqvMx7Oxd3LmQl4VJM4wCnx04pLu567KamSC4YtWC0HBLBlfg9BbEFurOx7WTthlURuMBD8CqJEuyIimHaVGSNu7pl47vfLZ4NB/spkTUmrnj27TxYiSD+HD6yJ2eQO3FlWU52b43X27ecptXMR8QEvXhe8S/4qyX2aE/uB1mcznwkO9ssNT3Hh2bQSg3CRUJt6Qs6aiyrgpKK1DSK3zamq3jMgcILG05HwTAVVKz9o793NNQc1wOCBwkLen7fmj8c5+RO8dBAFMD45KuXx9eu1ZmvHx8lsBkIytKnWWkTUx345vq89I0raxHxzUlRFRpDlvPhoNPqKRdzjGJo3ZqsJCiPIdyMUfSOsuTrDTFUBk9uXLj4Ma3Hr32K579aAt1YtrJQLFpg9sGAefCyUN7vA++4WPWenPj4t5WcxwODt9i8qMJFAPSmSbV91qLrWV2ZKeHUtWwqOUom1y5tEUcTg+mx4988DTYUGQICYAIASXI4sDde8vfeDFJxxGpRgkwm7J1mBJD6BIJQTKwWLClxAGfPLY7Y+IVwEDBysY4/IkfnUybfMlZUk6Gk0GSkEwf4nS6bW/epquUDciYSHwAIAS1rh+9Zu1eOxYEiEiYNm54yBQ6CbKaec2rKYcm0+X0bOkbnSQ6TXSa6iRTOh2+/O0nj96gg1tNlZQjW5SkEkKKiZkEz/UyzI94egLWyryBw3xzZ297Z3vD72wfve6yk7veqtkpZ0VIElSKmMFZnp9JvWBmqBt5OxTl5UsXdzcxKxdo59PXhbGau7TAJEMyytXcLPhoX27fha2LYTNlARTB5ZE7mULjwc0bGOsWukEINc9PAiQGSe0/ON28wmgIAnetJyRV8PXRKM1G+YC9lYd37PwYbQ3a+MU88Xfx2ktEGrGvTQqCaJB1mUzGftBIbONGAghq46pPthP/gLuGwhafprYEqQylUC2rqZAirVWSqiQlrccXLtUf/MHjj/+L4elRtdSJCVnWyjYGB00T6iVYiwBirdzC8ejK5Z2d7eHWTlYOpqPxoy9/YuvsdpFjtUQCBOS29CyCIvNK3nJDuHzt4uW94cZGPhgvRuPHX2725reBqZoLEopwCBC8zM+k8nL4GMABEngHTQWzBYDG48e+zINKFCkSgfmBm80lzTMoRvtnpxfu2clVjYTAXasxAiKxa6SuhB0SKtRMCgLbCoMsVTwl2vnJrXFXunc9178XDe6OSFaj7aa8zke3IMm7BnRBROR4emBgMChqeRxYBAlJoVJkTAKw++wLvv6Ro0//7HDxWDTV8zaEjb9KIsjhpKLbOMmuPbV38cJwe6fc2kmK4WBz87AsDr78GfP45sAvM806zrljqDwdeXNkNrJLlzZ2t0aTrXJzMx+OR0RHiXn45U8Njm8NsdEIzGADVBZu2/SgSK4t55VBBvQBguXjRpmtwen0rHgApCwhcQDbwLxCMxiMrlye3zw+enyEWsYXNCnilmrRKacRAZooKqAAZgeuqihkClwDwkgcq1VthWW93IL/hY57AECVKNh+zj36jSSJuJ0AIZCwABH4JjQLJgRZzoJ3FAMxpUkpJI0Ae+94UbQ6/Mqn6OGbuVukIEjAAo6h9nQs5azYHly4sLWzOdzeHmxuZ6OJKYZKq0vFKCvK/TcvP7xzK5ydoq9AgMnYPNeDyc7GcDiZZKNJMdrIR+OkHCltTF6kRXbw5usn92+H2Sx454RcUdLu4IIxtw8f2ulRThxYDht1VG7vTnaOTt4azxcmoRAkqkoecppsbe5ub565547vnJijELwMJ2RyjQlF5LY7agUAwMl8ymcn4sBUweTOcvCxiainfmiAb+4/PPc1IoGA2ntn/eWBamrSUZhJonomOznbt9USQSA4x862ys6IqBRpBYgZ894zz2dFcXD7xsm9O/70wDdNYAnGyLAww/HljXE5GmWjjXJjIx9NTDlMy5E2CZcjMqbMs7O9C/PT03ox89aRUtroNEmTokzKUTIYpsUgKQZJMVRJYoqBSZKyLKYXL52dnDRVhSImSZI0VUrP93aP9vd5Pg2BeXt4YWNSDofz6eDOnW9MmqkSsYzTkJxtXb+4tzuejIvh8GhxVJy+gYLLWSgHIR9pnSKpFo4PTuyS6znPFxjQLAPO9LCU0JOZuwE+8E2H4Tf/gwAckq0ri/yaOv6qyZROEYicFd/wchpmpxAAg0CNiTBz4E4mgVARUWZiSE86L4r53sXF9LhezNl5RDHG6CQzWZ6Ww6SM1PxRUgxMPiCjiSUnpdIsGY5H86mvFt5az4xIyhidZCrJdJabrDRppvOBSlJA0Gmi0iwbbUxmp66qOHhBIp2gUuMQmstXmuWcvddamTQzSb556fLx1vbBvXt2sRBCNRhevrC7sbNbTLaUIYCP7H/OwuL2IKPpKc5njhS2jUWCIYBthIFEYfDuAe4N8qEmoZb8taqI6rX5qivyNOJKiluAAIIuh/r6h6ZvfVkbo9AJQBS8axoSlsTwkdOu2NAUK+bSKSUoVEQpICmVJCYrkuHGYDF1i5m3jQgjESlDJtFpbvIyyQudlTrLlUnQ6Nj/o5M0STNXjtg23jbBOwEgpUlp0iYevCrJTFaQNkCkk9SkuckHyWDsm4q9i5p2pLQgsG1807C3IEw6USYFgHJze+vSxXqxAGatKCmH2XCclkOlkyQriPDxlz9bndycKIsGo+KgdHPdBEDYz2q6D1v68uXBsNBJSlp1suqRw9kZek31H8/nL9KyNINNnv/Q6Rd/xT1+Cyj13oMQkCCwIjicyYP8+s72rjEKlepjEiFABExyMjlmQ52WOsuTYmgHs9DUraEjSKO7oDDNlEnRaFQaSJE2kfJMSSbOetsEb2MXOypCpZVOyCTKJGQS1AaQUBtUyhCpJAlNE7yLJ1jL5vI2OBcn3RMRKiNIafDZcOLrynuPhCZJTZarrFDKJOXgojZJnu2/uXd69009OyygypQoEmawjItACyqWxdZg58L2hZ3BeCPJCmUMkUainkaoV1rH0uvat12FqxYYRABIR5vJB3745Jf/ad4cEREAc5BFg4eNPi73Nq5cm0yGJstJEak4YRBRZ6AStjP/+k/zwS318h9Nxtukjc7S4JyEWAYjJA2KlEk6sxpUBpXqcnZSRKQNO6cy1xouciBIKW2wJZ8bULprdlKaSLRRJmWOYwYFYz2fA/tIuA6CSEoBkDBzXoR4iIEQaTKJSlPSRpjJpCpJB6PJ6eUrhw8eHB4e2uVcvAOWQBrSvBwO90b5cDwuJhvZaGzyQplUaY2k2tRQRPdwXUdJ6WI7kY7bGSVLtNJ645kX59/++x5/+ZPh+HGw1jItdYFbm7s725Pt7XKyleQDpQ3GgbMmC7O7Ij48+qq58zF59FpVueJ3/hUdHBmjnO26q4iIgAiVJqWB2ugQIkcWERUJE5JSSlMwFEIbSwPGzjdQGpXCtpkbAAANCcWRJVr1KFLHeFcJAzOLb3cGoghzSHWIio8hzu+M6x1EYruGTvO0KEcbm9XZab1c2KYJIRCi0coYY7I8KcqkLNNimOSlTjIyBrTqoUndtqEBS68YvxokeO5LVMbk5YXn3mXS9OjerWYx0yKTxCR5npaDbLyRDkc6y8mkqDSoJExv8xv/Vh28rr0FW4HK+Ogee0tpTl6RTuIIA+h6KOPSFlKAUTGDuhEXhIRABKyBtNKxn6OrxBMhaSQF6/I5iEgKdIIcRAQlqnWTtI2OLMJKDHZkcgCR2M/CDKTELwG8yjYlNIjxKSIRam1MXmajDbdceFeHwCBMhERKmdb1mbzQaaGznEwCrfdAbOkGK3U2WclV9b232CnMEKmsyMcbW5eu5nlmF1MOXoSUMTrPTVYkxcBkhUozZRQmOd99Q93+DKYlLGcCyMuKNyeUFlTPRSciTLrNa3sOuSASqphSIdDa8CIEUO1Mo07pNqKMQIiRZtr1InSAFcZmY1wTe+66MBkFoJchiEeKEpCAoEJzEu7/Cj78onv29yU3vhtcBb5WJkUi0goTY/LCD6rgLPsg7FsAl5QyWidZe2AoDaRaK2Or19HPiusHwXVswm5MXwdPkzJG8kG6EcgYV42DbYQZlSKTxChNZ4UyCZLBYOnKt9Zf/jfZ/uuQjQCVW3p87weUNowApDEq4K4U90gQIB2IKqA+xnYER1+epxYpUNQxN3qVMlofzSq4ZmoiAejlFNu5RiLAhH1HsfSiCwAMkJT89n80dz9B82n12i+iNkCJ3nsRnVWIRIpIszY6zdhZ770Eh3G1I5JSpIzSBhWBUt12bFt+NLXlzDWVwRbA7MSB2kOSgBQIa5NCOSKldFYE28RHStqQTlSSUZqRTlBpADHDHfmBv1l97B/gnU+q+qShzfJdvx1cE38qvUJ2O5qZAEF0CaaE5rg9OIBhTe6QsZsOLavUtj/MO8sL96J7sWW7mwiNrbJoaIMywnZ+/crfKCANiylOD1jl5uwWfvb/9Mslf8f/kl1/H9dzJE0oQBABBhXb2VtEPToxwohAELXeLGYUKCuYdE2/qh8e1mksRUVuaisyGpEQlDKcppGPEoMqMoZUu2tAKfFNMrqgf/hv2Iev1V/5D2p4Ndm4KHbZDS+Il8Ft809stq0OoT4mjkKg50XkEDtZ6+7E6yHknlYvLNkYgkW7aJVNZL37kldTf7oncE4JiRAVYbnF1lGaoThcevvoQNm67/klUmgSVhpCiEcFylqNKio/Ur+ce4i/VXfrmCvST7LnTqFX1q9N4ruAEKRAhEG3A94RI76BygAqIIrtxxIceZtdeDb9Xf8DBNsK/rThDfec+N55xsYQXrV+CXba4R1qgLICwHB99hH08n4dW3OlybySvWnfU9YTX+kKiYjAHnfeKc5Ls+9rtl7z+//Y4OkPcj0Dip0/iKgISWI3qrRjB9ZmLfXTp3s9dAboDd1K4nVwc2RBY2eW9leo7T1HhWAIEUh3/jBih1qIgChGZp1yMoCtQapOCGhFs15rJO2pMN2ndYuse4ywvhLbyGG9XtE38dWnCCC9KHbfvX2erbwm1CVddIWICM7qreuLy98pp8fwwkvpcx9JL70Dmnpt2feaRtS/N651CnVj87gfj9yGonzrlzs2QPsoWrt1zYccmQdtm2rXvBjJBiyrTnNoT3kgJdgNrAZ8UlwdnlBigjWFsbY62quitgLCSOdl83ElwPrN2k7rArTYzZAQXrNtP+S7n2u1kqkTEMDI01BKaXANuwrbfsSoMsntgmxHJ3A73/ebrqHvsI/PWbMwnuvdWjVISn8YAoOgIPd6mhCNqLgrKLeymq2MTat61TWJt4MG1hVUsU/1z/WPrcVnK4fWCXy0c6Chh9Vl7bbW6VY9pvCElFnXh8mrqUjrhaXWq7AjEPANR5I1UaS0rSTUWoout7NPe4UqfKI/GdZXjxYQkidGjq1UEkBW4krdkAaSfjp6nC3XjXLs1vZqAFy/06Q/Wvv1uz4rtI2Cpd9b6yZD6GaNR1EUYgEC6c66GBStyAKrqR19D1pPtl8Nllg9YZGuereaFds+ZOqINrDWWChd1rOSl8fziMVKKGKNEarpnF3ag7CzJK4CaWmHmSByi8Wushtqp421OZmsPgYZV6oi66v1XEF4bXIarV1imzR2AUM345zjoAnuZFf7uE7WnC+vlopIp/HcRjqdfms/2Fv60da94vVqebYj9KKhuSMByEqyWDp2anyrVk16NbYt3o2OdaV1Tin2Uy6YCYnX5t13MzvD+bALz9fD4o5oR1d2AXHX37MWJaxMfm70EcYVujpHYIUqdmcpA6yOw9XnCwvgf8FhYxdCrjmKNdkjOC/bD13bGrQ6CPFI6Poi2ircap1xt0SljxvW5shSm7BIy/UU6Ac4tGKD/fOkTiYdcdVF1dsrkqpZBKXX31i7V1xX+n/y7Oqbq7rlhS1XpttB/bwatXaKyDedqZ0+Yh+q9tPj+5NBMGYHawMYzyktPqn63PLDWl/cTimW1bHR0kKRu0fY7RJBbB9PhBhbg/ads9JL3XUf1I6Z6DILbHl5q9O0PVm4u02Mco0Y1m++o4h0ek/rkxJ7SZyV1vJqca7i/W5RnAsQYJ1i1bVKdg56BbCvCzq3saogCK6iw/NOrPVFLL0EpvShxWpGXvdwAq5yZ5Z1+Rnpu6ra8Fe385u6+KDbUz3qQauQv6UHtqt7NYyvlyhsJ+Fh/xErHWr5ZkthH7hjL7HejWrHbqRrJ+sbGY9ruMQ5EKy/H+wOiieWPOPKxTCePyY60LUTkW+5gNwRPaU1YrseuAvYOF5Stxu5A5ahk+Za0zkW+P8BMZE95oW2j2gAAAfkZVhJZklJKgAIAAAAAwAOAQIAzAMAADIAAAA7AQIAAQAAAP4DAABphwQAAQAAAP8DAAAAAAAAU2lnbmF0dXJlOiByeGZHQzRnUStLZ3YvZTNsN2w4SVV2K2UvQkhKbEJxcWxSV3haN0pNaFAwVTdjWFgrRElqamtnS21sRzluanMrS3YvZEJTSWYwMExJNG1nUkpKODdjY3VqRXVnVHAvOTJCeUxJMUc2TjJPd21WSzRZUDhwVjM5YysxaG9RM1B6ZkR3SktSNFk3US83UEtoQUwrc1dMTFJtMmhEWlRzUGlOTnNFMXNIeEljR1JQbk4yUUw1Wll1bEJScU9XU0didnBpQ2NhWXIxckdwNVV4Z2xmYlJzYW9XbE9ZeUVrcmRJbFNJMEpvMnR5SWVpek0zYWZ3VmZwUiswNzllaFl0VUZlVmRrcXJNMDI3cHJhVkNHVHRiblZmS0FIbWpWZ0prT3FKYWtkbjM2N3RVeko0YUtVcFB2MWl6T3p1TjYrSjlSdGQxbTIvRHROWHh6VnRyZlpIZ0t0Y2FrbU40OUdycko2SnlKOFg2elNNcmpCN25nNEE0WVFWRHVVSjZ1Ui9HdWdFZEJmV0dWMmRySmlrNEJUd081cURNUGJQZ1Z6NFJWQW5lYXNSbnRTdFNDWkZRYjV3dkVsZThxMDRMcHEySzFQeU1pU3ZlV2Z4VHZhYTZHUlNJaHd0aFdzTEcyeXkvOHB5aVdTdTFyMlRvZ1BrRUtOeDJFd3RMMkRwSGdHZ24rYjBHbUk4MUJJTzArblhCM0RmWisxSTRmN0JkOWlNUSs0V0VXODZ6OC9vSmhEQ3VsaUl6NVQzakRRMklEUTE1bmJQQnFubDhYSWxBU3J4cERPTUR6dXI2OHRKc3U4SVNKWUcxYkpVRURIUHZCa3R5TndUK1F1dzhTeCtuTE1iS2xFTFA3UWhyd2xMbUlaKy9Dc1VEd1dUakt4OWJzcEIvdnJFWXV1QzluTjNqdmJrUFNBdHVCaERMcUtkZUZsWUxFaHBNaHZDQnFuNEJveVJWNFlCNDV0UWlITlR4dHl1aGRVVHFYWkFobEtGVEZIZHVLNUdFMUpUelBPM2VEeHpiVTBSS1V3QktYK1lDeXpDQmk2VzIvV3g3THE2aHhYZHp2QTlpTi9TN0NROWhiNi96V3RFOCtJVXU4S0ROa0tHcS94YVdFcVJlellGK1V0K1hxZU1rTVM5Rjl1bHlPcFJoK09KeENrK2U3L2dRenpueFpZcGVMRWtNNFhXUE9oeVNkR3lnYjhFTWhON0dFZHdSVXJkeG1UU3RjTnZ4a3pHemRMdm42NWRieTZvZ0VGRmtLOUdrUTNwTUxvUS9JeHYrQkkAAAEAhpIHANMDAAARBAAAAAAAAEFTQ0lJAAAAU2lnbmF0dXJlOiByeGZHQzRnUStLZ3YvZTNsN2w4SVV2K2UvQkhKbEJxcWxSV3haN0pNaFAwVTdjWFgrRElqamtnS21sRzluanMrS3YvZEJTSWYwMExJNG1nUkpKODdjY3VqRXVnVHAvOTJCeUxJMUc2TjJPd21WSzRZUDhwVjM5YysxaG9RM1B6ZkR3SktSNFk3US83UEtoQUwrc1dMTFJtMmhEWlRzUGlOTnNFMXNIeEljR1JQbk4yUUw1Wll1bEJScU9XU0didnBpQ2NhWXIxckdwNVV4Z2xmYlJzYW9XbE9ZeUVrcmRJbFNJMEpvMnR5SWVpek0zYWZ3VmZwUiswNzllaFl0VUZlVmRrcXJNMDI3cHJhVkNHVHRiblZmS0FIbWpWZ0prT3FKYWtkbjM2N3RVeko0YUtVcFB2MWl6T3p1TjYrSjlSdGQxbTIvRHROWHh6VnRyZlpIZ0t0Y2FrbU40OUdycko2SnlKOFg2elNNcmpCN25nNEE0WVFWRHVVSjZ1Ui9HdWdFZEJmV0dWMmRySmlrNEJUd081cURNUGJQZ1Z6NFJWQW5lYXNSbnRTdFNDWkZRYjV3dkVsZThxMDRMcHEySzFQeU1pU3ZlV2Z4VHZhYTZHUlNJaHd0aFdzTEcyeXkvOHB5aVdTdTFyMlRvZ1BrRUtOeDJFd3RMMkRwSGdHZ24rYjBHbUk4MUJJTzArblhCM0RmWisxSTRmN0JkOWlNUSs0V0VXODZ6OC9vSmhEQ3VsaUl6NVQzakRRMklEUTE1bmJQQnFubDhYSWxBU3J4cERPTUR6dXI2OHRKc3U4SVNKWUcxYkpVRURIUHZCa3R5TndUK1F1dzhTeCtuTE1iS2xFTFA3UWhyd2xMbUlaKy9Dc1VEd1dUakt4OWJzcEIvdnJFWXV1QzluTjNqdmJrUFNBdHVCaERMcUtkZUZsWUxFaHBNaHZDQnFuNEJveVJWNFlCNDV0UWlITlR4dHl1aGRVVHFYWkFobEtGVEZIZHVLNUdFMUpUelBPM2VEeHpiVTBSS1V3QktYK1lDeXpDQmk2VzIvV3g3THE2aHhYZHp2QTlpTi9TN0NROWhiNi96V3RFOCtJVXU4S0ROa0tHcS94YVdFcVJlellGK1V0K1hxZU1rTVM5Rjl1bHlPcFJoK09KeENrK2U3L2dRenpueFpZcGVMRWtNNFhXUE9oeVNkR3lnYjhFTWhON0dFZHdSVXJkeG1UU3RjTnZ4a3pHemRMdm42NWRieTZvZ0VGRmtLOUdrUTNwTUxvUS9JeHYrQkloS13uAAAADXRFWHRleGlmOkFydGlzdAAuKbe0LAAAABR0RVh0ZXhpZjpFeGlmT2Zmc2V0ADEwMjMlE/r5AAADF3pUWHRleGlmOkltYWdlRGVzY3JpcHRpb24AACiRDc5HAqIwAADAr+w9BwSRsjcpxtB78QZSBZESWl6/Oy8Yv62HDK9z+ffPfFRQZmsX6PVGldee7wUUbqCkpKfWS9PUe/Hx4jWzcS4h/04SoKDPp6v1bw/F4bMAfaMKyUfV5WIg9lt7mibw7/f6Udc6GCmRkU4D0ZCzGHv/RjqbOsIYXcU3oJufe3VIpeya7rEp71K8ozd3AyyxYXhfplFeweK0lrWo9PI80Bt6zmAxrnF7pWsveZMd+zDfxlZ+Z+lMz3C8hUfdV7m3ZL+4t9NT7eYC9T66aD8Gn6hsiXnNqj2qRg9ceLFsUhw+yqjoptm8MPw4Z5EMA5wPUaXfn99PVGudPWlZVwxXjsch0dhMD0dno1tik9XigCZ6uKC/DKVgKzlIhOfq9ax1/M66r8WKcJ41Tjs1IeGIb84fiR9q9s6mbqSsocatHgXXWi2kKoYRU8xa27FSsNu3STGd3KkjwnrRfSizxRuwj3359XDz276pfSlMF9YYJ0anndNs/a2MqyPYsoyDno+aHTfxYkDmPClhPNvYX+mZCX6106m6dTDqjg1GGZ81rAeQX+AXCbSE7AsYEumqVC9AI7bipUJsTRewsRoLHBGon9Yo8tq3iNyC60dxGaS49G3IHWkaeiFB/d2fj1GxTYWsMydgbVkF5GsppHMtVJWns0kdPq09AO66C/4BBsPM9V41HN5t5r03vugFKHkJlT0OPvoh5ssoUduspusqi4N1/Wx55/h3vEqNYkx6UT761FCb0Ww2+f+BlX6nF7GpxN6w2z6t4MDn2hRhMCWve9Prj+DxLFb9BlVaC4hjX0vlIHl48fRwl/QEpPJJZKnlYoaKD96YuOZICrLdxdaifF52xSbnKBJjVQAoXAVdsTodTtSRxerklSR9gBCDZCrNzvTFh7j2pz16DbC1Q+5AyVO1S8hwvNKxNNTOZJPYsZvTL+BZ54JqNhYP1WL3wrk4voGP39Z2dASSwtgG7lbkJ/er1cej00XYudfRNH4uhY4NSOgfAX9F4mp2mz0AAAAWdEVYdGV4aWY6VXNlckNvbW1lbnQAQVNDSUm041reAAAAAElFTkSuQmCC" alt="Foodie logo" />
+        <span class="logo-text">Foodie</span>
+      </div>
+      <button class="menu-btn" id="menuBtn" onclick="toggleMenu()" aria-label="Menu">☰</button>
+    </div>
+    <div class="location-bar">
+      <div class="loc-status" id="locStatus">
+        <strong id="locTitle">Location</strong>
+        <span id="locDetail">Tap the button to detect or enter a ZIP</span>
+      </div>
+      <button class="loc-btn" id="locBtn" onclick="requestLocation(true)">Use my location</button>
+    </div>
+  </header>
+
+  <div id="view-foodie" class="view-section active">
+  <div class="zip-row" id="zipRow">
+    <input class="zip-input" id="zipInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="5" placeholder="Enter ZIP code (e.g. 33511)" />
+    <button class="zip-btn" onclick="searchByZip()">Go</button>
+  </div>
+
+
+  <div class="controls">
+    <span class="range-label">Search radius</span>
+    <select class="range-select" id="rangeSelect" onchange="onRangeChange()">
+      <option value="2">2 miles</option>
+      <option value="5">5 miles</option>
+      <option value="10" selected>10 miles</option>
+      <option value="20">20 miles</option>
+    </select>
+    <select class="range-select" id="kidsFilter" aria-label="Kids eat free filter">
+      <option value="off">👶 Kids deals: show all</option>
+      <option value="any">👶 Kids eat free (any day)</option>
+      <option value="today">👶 Kids eat free TODAY</option>
+    </select>
+  </div>
+
+  <div class="chips" id="chips">
+    <button class="chip active" data-cat="all">All</button>
+    <button class="chip" data-cat="BBQ">BBQ</button>
+    <button class="chip" data-cat="Steakhouse">Steakhouse</button>
+    <button class="chip" data-cat="Seafood">Seafood</button>
+    <button class="chip" data-cat="Sushi">Sushi</button>
+    <button class="chip" data-cat="Asian">Asian</button>
+    <button class="chip" data-cat="Thai">Thai</button>
+    <button class="chip" data-cat="Vietnamese">Vietnamese</button>
+    <button class="chip" data-cat="Chinese">Chinese</button>
+    <button class="chip" data-cat="Indian">Indian</button>
+    <button class="chip" data-cat="Mexican">Mexican</button>
+    <button class="chip" data-cat="Latin">Latin</button>
+    <button class="chip" data-cat="Italian">Italian</button>
+    <button class="chip" data-cat="Pizza">Pizza</button>
+    <button class="chip" data-cat="Burgers">Burgers</button>
+    <button class="chip" data-cat="Chicken">Chicken</button>
+    <button class="chip" data-cat="Fast Food">Fast Food</button>
+    <button class="chip" data-cat="Cajun">Cajun</button>
+    <button class="chip" data-cat="American">American</button>
+    <button class="chip" data-cat="Mediterranean">Mediterranean</button>
+    <button class="chip" data-cat="Sports Bar">Sports Bar</button>
+    <button class="chip" data-cat="Breakfast">Breakfast</button>
+    <button class="chip" data-cat="Takeout">Takeout</button>
+  </div>
+
+  <div class="scour-wrap">
+    <button class="scour-btn" id="scourBtn" onclick="scourAndRank()">Scour Reviews & Rank</button>
+  </div>
+
+  <div class="map-wrap" id="mapWrap">
+    <div id="map"></div>
+    <div class="map-caption" id="mapCaption">Tap a restaurant’s “Show on map” button</div>
+  </div>
+
+  <div class="results" id="results">
+    <div class="empty">Pick a category (or All), set your radius, then hit <strong>Scour Reviews & Rank</strong>.<br>
+Or enter any US ZIP code above and press Go.<br>
+Works anywhere in the USA: live restaurant data around your device or any ZIP (plus rich curated rankings in Brandon/Valrico, FL).<br>
+Each card has a <strong>Show on map</strong> button.<br><br>
+<span style="font-size:0.85rem;opacity:0.8;">Tip: Tap “Use my location” or enter a ZIP first.</span></div>
+  </div>
+
+  </div><!-- end view-foodie -->
+
+  <div id="view-gas" class="view-section">
+    <div class="gas-note">Prices are approximate / last reported. Always verify at the pump or on GasBuddy. Sorted by cheapest for selected grade + distance.</div>
+    <div class="fuel-chips" id="fuelChips">
+      <button class="fuel-chip active" data-fuel="regular">Regular</button>
+      <button class="fuel-chip" data-fuel="mid">Mid-grade</button>
+      <button class="fuel-chip" data-fuel="premium">Premium</button>
+      <button class="fuel-chip" data-fuel="diesel">Diesel</button>
+    </div>
+    <div class="scour-wrap"><button class="scour-btn" onclick="rankGas()">Find Cheapest Gas</button></div>
+    <div class="results" id="gasResults"><div class="empty">Select a fuel type then tap Find Cheapest Gas.</div></div>
+  </div>
+
+  <div id="view-specials" class="view-section">
+    <div class="specials-note" id="specialsDayNote">Showing specials for today</div>
+    <div class="results" id="specialsResults"><div class="empty">Loading today’s specials…</div></div>
+  </div>
+
+  <div class="how-section">
+    <button class="how-toggle" onclick="toggleHow()">
+      How we rank by real reviews
+      <span id="howArrow">▼</span>
+    </button>
+    <div class="how-body" id="howBody">
+      <p>We score every review for <strong>sincerity</strong> (0–100) instead of just averaging stars.</p>
+      <p>Signals we look at: length & substance, personal experience markers, superlative density, generic phrases, rating–tone match, and reviewer history.</p>
+      <p>Places with higher average sincerity scores get boosted in the ranking. This helps surface spots locals actually love instead of review-farmed places.</p>
+      <p>Ranking always uses your current location (or the ZIP you entered) + the radius you select (2 / 5 / 10 / 20 miles). Only places inside that radius are ranked; the top 5 are shown.</p>
+      <p>Want the location? Tap the blue <strong>Show on map</strong> button on any result card. The map appears with that spot + your location. Map is hidden by default so the rankings stay front and center.</p>
+      <p style="margin-top:12px;font-size:0.8rem;color:#888;">Nationwide live data from OpenStreetMap around your location or ZIP; extra-detailed curated list for Brandon / Valrico, FL. Only currently operating restaurants. Data refreshed August 10, 2026. Map powered by OpenStreetMap + Leaflet.</p>
+    </div>
+  </div>
+
+  <div class="footer-note">Foodie · Nationwide (USA) · Top 5 within selected radius · Map on demand · Currently operating only · Updated Aug 10, 2026</div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    // ——— Brandon / Valrico center (Gas/Specials local pages only; never a search default) ———
+    const FALLBACK = { lat: 27.9378, lng: -82.2859, label: "Brandon / Valrico area (approx)" };
+
+    let userPos = null;
+    let selectedCat = "all";
+    let selectedRange = 10; // miles
+    let locationTimer = null;
+    let outerTimer = null;
+
+    // ——— Map state ———
+    let map = null;
+    let markersLayer = null;
+    let userMarker = null;
+
+    // ——— Restaurant data (expanded Aug 2026 – currently operating only) ———
+    // format: "Sit-down", "Counter service", "Takeout-focused", "Fast casual", "Food truck"
+    const restaurants = [
+      // BBQ
+      { id: 1, name: "Mission BBQ", cat: ["BBQ", "American", "Takeout"], rating: 4.4, sincerity: 87, ownership: "Corporate", format: "Counter service", hours: "Mon–Sat 11–9, Sun 11:30–8", phone: "(813) 830-9618", address: "1504 W Brandon Blvd, Brandon", cost: 16, opened: "2018", busy: 65, delivery: ["DoorDash", "Uber Eats"], alcohol: "None", sportsTV: false, wait: "8–15 min", specials: "Occasional holiday specials", topDish: "Sliced Brisket plate ($15–19)", notes: "Consistently praised for brisket and patriotic vibe. Free soft drinks with meal.", website: "https://mission-bbq.com/locations-and-menu/brandon-fl/", lat: 27.937678, lng: -82.306411 },
+      { id: 2, name: "BubbaQue's BBQ", cat: ["BBQ", "American", "Takeout"], rating: 4.3, sincerity: 84, ownership: "Corporate", format: "Sit-down", hours: "Sun–Thu 11–9:30, Fri–Sat 11–10:30", phone: "(813) 685-1800", address: "957 E Brandon Blvd #5500, Brandon", cost: 15, opened: "2010s", busy: 58, delivery: ["DoorDash", "Uber Eats"], alcohol: "Beer & wine", sportsTV: false, wait: "10–20 min", specials: "Combo dinners & redneck nachos", topDish: "Brisket or pulled pork plate ($13–18)", notes: "Solid local BBQ chain. Casual, family-friendly.", website: "https://bubbaquesbbq.com/brandon/", lat: 27.937639, lng: -82.269158 },
+      { id: 3, name: "Kojak's House of Ribs", cat: ["BBQ", "American"], rating: 4.3, sincerity: 85, ownership: "Family", format: "Sit-down", hours: "Tue–Fri 11–8, Sat–Sun 12–8 (closed Mon)", phone: "(813) 324-8371", address: "1809 S Parsons Ave, Seffner", cost: 18, opened: "1978 (Seffner 2022)", busy: 55, delivery: ["DoorDash"], alcohol: "Beer & wine", sportsTV: false, wait: "12–25 min", specials: "Rib dinners & homemade sides", topDish: "Rib Dinner or spare ribs", notes: "Family-owned since 1978. Moved from South Tampa to Seffner. Slow-smoked ribs and classic sides.", website: "https://kojaksbbq.net", lat: 27.980715, lng: -82.286012 },
+
+      // Steakhouse
+      { id: 4, name: "Jesse's Steak and Seafood", cat: ["Steakhouse", "Seafood"], rating: 4.3, sincerity: 86, ownership: "Family", format: "Sit-down", hours: "Mon–Thu 11–9, Fri–Sun 11–10", phone: "(813) 685-2381", address: "524 W Brandon Blvd, Brandon", cost: 32, opened: "1980", busy: 70, delivery: [], alcohol: "Full bar", sportsTV: true, wait: "15–25 min", specials: "Early bird before 6pm; Sunday prime rib", topDish: "Prime Rib ($28–36)", notes: "Local steakhouse since 1980. Prime rib and seafood get regular praise.", website: "", lat: 27.937811, lng: -82.291873 },
+      { id: 5, name: "Outback Steakhouse", cat: ["Steakhouse", "American"], rating: 4.0, sincerity: 78, ownership: "Corporate", format: "Sit-down", hours: "Sun–Thu 11–10, Fri–Sat 11–11", phone: "(813) 684-6283", address: "2020 W Brandon Blvd #190, Brandon", cost: 28, opened: "1990s", busy: 72, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "15–30 min", specials: "Happy hour; Bloomin' Onion classic", topDish: "Outback Special / Alice Springs Chicken", notes: "Reliable chain steakhouse across from Brandon Mall. Consistent steaks and sides.", website: "https://locations.outback.com/florida/brandon/2020-brandon-boulevard", lat: 27.937820, lng: -82.313511 },
+      { id: 6, name: "LongHorn Steakhouse", cat: ["Steakhouse", "American"], rating: 4.1, sincerity: 79, ownership: "Corporate", format: "Sit-down", hours: "Daily 11–10", phone: "(813) 653-9133", address: "11102 Causeway Blvd, Brandon", cost: 26, opened: "2000s", busy: 68, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "12–25 min", specials: "Lunch specials; patio seating", topDish: "Flo's Filet or Outlaw Ribeye", notes: "Solid chain steaks with signature seasoning. Good for groups and families.", website: "https://www.longhornsteakhouse.com/locations/fl/brandon/brandon/5079", lat: 27.923759, lng: -82.326340 },
+      { id: 7, name: "Stonewood Grill & Tavern", cat: ["Steakhouse", "American", "Seafood"], rating: 4.4, sincerity: 84, ownership: "Corporate", format: "Sit-down", hours: "Mon–Thu 4–9, Fri–Sat 4–9:30, Sun 4–9", phone: "(813) 655-9561", address: "612 E Bloomingdale Ave, Brandon", cost: 35, opened: "2000s", busy: 65, delivery: ["DoorDash"], alcohol: "Full bar", sportsTV: false, wait: "15–30 min (reservations recommended)", specials: "Oak-grilled steaks & seafood", topDish: "Oak-grilled filet or grouper", notes: "Upscale-casual oak-grilled steaks and seafood. Popular for date nights and celebrations.", website: "https://www.stonewoodgrill.com/location/brandon", lat: 27.894001, lng: -82.273749 },
+      { id: 8, name: "Kobé Japanese Steakhouse", cat: ["Steakhouse", "Asian"], rating: 4.2, sincerity: 80, ownership: "Family", format: "Sit-down", hours: "Daily 4–10", phone: "(813) 685-5656", address: "2210 W Brandon Blvd, Brandon", cost: 35, opened: "2000s", busy: 72, delivery: [], alcohol: "Full bar", sportsTV: false, wait: "20–40 min (reservations recommended Fri–Sat)", specials: "Birthday / group hibachi packages", topDish: "Hibachi steak or seafood combo ($28–40)", notes: "Classic hibachi show. Table-side cooking, onion volcano, good for groups and birthdays.", website: "", lat: 27.939433, lng: -82.321769 },
+
+      // Seafood
+      { id: 9, name: "Shells Seafood Restaurant", cat: ["Seafood"], rating: 4.4, sincerity: 82, ownership: "Family", format: "Sit-down", hours: "Tue–Thu 4–9, Fri–Sat 4–10, Sun 12–9 (closed Mon)", phone: "(813) 689-4691", address: "115 E Brandon Blvd, Brandon", cost: 22, opened: "1985", busy: 58, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "10–20 min", specials: "Early bird / seafood specials", topDish: "Grouper or Shrimp platter ($16–24)", notes: "Reliable Gulf seafood. Family-owned since 1985. Casual and family-friendly.", website: "https://www.shellsseafood.com/shells-brandon", lat: 27.937661, lng: -82.285506 },
+      { id: 10, name: "Fat Willie's Fish Camp", cat: ["Seafood", "American"], rating: 4.4, sincerity: 86, ownership: "Family", format: "Sit-down", hours: "Thu–Sat 4:30–9, Sun 12:30–7:30 (closed Mon–Wed)", phone: "(813) 571-7630", address: "1912 Main St, Valrico", cost: 22, opened: "1975", busy: 60, delivery: [], alcohol: "Beer & wine", sportsTV: false, wait: "15–25 min", specials: "All-you-can-eat nights (check current)", topDish: "Fried grouper or catfish platter", notes: "Local seafood institution in downtown Valrico since 1975. Family-owned fish-camp style.", website: "https://fatwilliesfishcamp.net", lat: 27.938500, lng: -82.242000 },
+      { id: 11, name: "Bonefish Grill", cat: ["Seafood", "American"], rating: 4.3, sincerity: 80, ownership: "Corporate", format: "Sit-down", hours: "Mon–Thu 11–10, Fri–Sat 11–11, Sun 11–9", phone: "(813) 571-5553", address: "1015 Providence Rd, Brandon", cost: 30, opened: "2000s", busy: 65, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "15–25 min", specials: "Happy hour; Bang Bang Shrimp", topDish: "Bang Bang Shrimp + wood-grilled fish", notes: "Wood-grilled fish and seafood specialties. Upscale-casual.", website: "https://locations.bonefishgrill.com/florida/brandon/1015-providence-road", lat: 27.922817, lng: -82.318417 },
+
+      // Sushi / Asian
+      { id: 12, name: "Sushi Ushi", cat: ["Sushi", "Asian"], rating: 4.7, sincerity: 91, ownership: "Independent", format: "Sit-down", hours: "Tue–Thu 11:30–3 & 4:30–9:30, Fri–Sat until 10:30, Sun 1–9:30 (closed Mon)", phone: "(813) 662-0728", address: "1713 E State Rd 60, Valrico", cost: 22, opened: "2012", busy: 72, delivery: ["Uber Eats", "DoorDash", "Grubhub"], alcohol: "Beer & wine", sportsTV: false, wait: "15–25 min", specials: "Lunch specials Tue–Fri", topDish: "Specialty rolls / Chirashi", notes: "High sincerity. Fresh fish and generous rolls. Quiet dining room.", website: "https://www.sushiushivalrico.com", lat: 27.937910, lng: -82.234337 },
+      { id: 13, name: "Kanji Sushi & Ramen", cat: ["Sushi", "Asian"], rating: 4.8, sincerity: 90, ownership: "Independent", format: "Sit-down", hours: "Mon–Thu 11–3 & 5–10, Fri 11–3 & 5–11, Sat 11–11, Sun 12–10", phone: "(813) 315-8065", address: "910 Providence Rd, Brandon", cost: 24, opened: "2020s", busy: 68, delivery: ["DoorDash", "Uber Eats"], alcohol: "Beer & wine", sportsTV: false, wait: "15–30 min", specials: "Lunch specials (rolls or ramen sets)", topDish: "Tonkotsu Ramen or signature rolls", notes: "Strong recent reviews. Ramen and creative rolls praised. Modern interior. Next door to Liang's.", website: "https://www.kanjirestaurant.com", lat: 27.928360, lng: -82.312417 },
+      { id: 14, name: "Liang's Bistro", cat: ["Asian", "Chinese", "Thai"], rating: 4.8, sincerity: 92, ownership: "Family", format: "Sit-down", hours: "Daily 11–9:45 (Sun until 9:30)", phone: "(813) 653-1111", address: "812 Providence Rd, Brandon", cost: 18, opened: "2010s", busy: 55, delivery: ["Uber Eats", "DoorDash"], alcohol: "Beer & wine", sportsTV: false, wait: "10–20 min", specials: "Lunch specials Mon–Fri", topDish: "General Tso’s, Pad Thai, wok dishes", notes: "High sincerity. Fresh made-to-order Asian in a nicer sit-down setting.", website: "https://www.liangsbistro.com", lat: 27.925703, lng: -82.315444 },
+      { id: 15, name: "Pho Viet", cat: ["Vietnamese", "Asian"], rating: 4.3, sincerity: 86, ownership: "Independent", format: "Sit-down", hours: "Mon–Thu 11–9:30, Fri–Sat 11–10, Sun 11–9", phone: "(813) 643-8888", address: "1202 W Brandon Blvd, Brandon", cost: 15, opened: "2010s", busy: 68, delivery: ["DoorDash", "Uber Eats"], alcohol: "Beer & wine", sportsTV: false, wait: "10–20 min", specials: "Large pho bowls; Northern & Southern styles", topDish: "Pho Dac Biet or Have It Your Way Pho", notes: "Main Brandon Vietnamese spot. Authentic pho, big portions, consistent local favorite.", website: "https://phovietbrandonfl.com", lat: 27.937857, lng: -82.300836 },
+      { id: 16, name: "Ploy Thai", cat: ["Thai", "Asian"], rating: 4.2, sincerity: 84, ownership: "Independent", format: "Sit-down", hours: "Mon–Fri 11:30–3 & 5–9, Sat 12–9 (closed Sun)", phone: "(813) 684-5007", address: "1941 W Brandon Blvd, Brandon", cost: 17, opened: "2000s", busy: 55, delivery: ["Uber Eats", "DoorDash"], alcohol: "Beer & wine", sportsTV: false, wait: "12–20 min", specials: "Lunch specials", topDish: "Pad Thai or Green Curry", notes: "Longtime Brandon Thai. Solid curries and noodle dishes.", website: "https://www.ploythairestaurant.com/", lat: 27.938516, lng: -82.321992 },
+      { id: 17, name: "Yummy House China Bistro", cat: ["Chinese", "Asian"], rating: 4.4, sincerity: 83, ownership: "Independent", format: "Sit-down", hours: "Daily 11–9:30", phone: "See listing", address: "W Brandon Blvd", cost: 16, opened: "2010s", busy: 60, delivery: ["Uber Eats", "DoorDash", "Grubhub"], alcohol: "Beer & wine", sportsTV: false, wait: "10–20 min", specials: "Weekend dim sum; lunch specials", topDish: "General Tso’s or Dim Sum", notes: "Dim sum on weekends and solid classic Chinese. Good for groups.", lat: 27.9370, lng: -82.3050 },
+      { id: 18, name: "Tandoor Indian Cuisine", cat: ["Indian", "Asian"], rating: 4.5, sincerity: 85, ownership: "Independent", format: "Sit-down", hours: "Sun–Thu 11–2 & 4–9, Fri–Sat 11–2 & 4–9:30", phone: "(813) 654-7300", address: "805 E Brandon Blvd, Brandon", cost: 18, opened: "2000s", busy: 50, delivery: ["Uber Eats", "DoorDash", "Grubhub"], alcohol: "Beer & wine", sportsTV: false, wait: "10–20 min", specials: "Lunch specials; thali", topDish: "Butter Chicken", notes: "Butter chicken and lunch specials popular. Good vegetarian options. Local favorite for 17+ years.", website: "https://tandoorbrandon.com/", lat: 27.937182, lng: -82.273092 },
+
+      // Mexican / Latin
+      { id: 19, name: "Taqueria la Cañada", cat: ["Mexican", "Latin", "Takeout"], rating: 4.7, sincerity: 93, ownership: "Family", format: "Counter service", hours: "Mon–Fri 10–9, Sat 9–9, Sun 9–8", phone: "(813) 438-8756", address: "1500 N Parsons Ave, Brandon", cost: 11, opened: "2010s", busy: 80, delivery: ["Uber Eats", "DoorDash"], alcohol: "None", sportsTV: false, wait: "5–12 min", specials: "Wednesday taco specials; al pastor / birria", topDish: "Al Pastor or Birria tacos", notes: "Highest sincerity Mexican. Street-style tacos, fresh tortillas, authentic.", website: "https://taquerialacanadafl.com", lat: 27.963657, lng: -82.286402 },
+      { id: 20, name: "Sabor a Mexico", cat: ["Mexican", "Latin"], rating: 4.3, sincerity: 83, ownership: "Independent", format: "Sit-down", hours: "Daily 10–10", phone: "See listing", address: " 706 E Brandon Blvd, Brandon", cost: 14, opened: "2010s", busy: 70, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "10–20 min", specials: "Happy hour; margarita specials", topDish: "Street tacos or Mole", notes: "Big menu, solid tacos and mole. Popular with families.", lat: 27.937624, lng: -82.274947 },
+      { id: 21, name: "La Terraza Colombian", cat: ["Latin"], rating: 4.4, sincerity: 86, ownership: "Family", format: "Sit-down", hours: "See listing", phone: "See listing", address: "SR-60 corridor", cost: 20, opened: "2010s", busy: 55, delivery: ["DoorDash"], alcohol: "Beer & wine", sportsTV: false, wait: "12–20 min", specials: "Weekend bandeja specials", topDish: "Bandeja Paisa", notes: "Bandeja paisa and arepas get the love. Hearty portions.", lat: 27.9380, lng: -82.2700 },
+      { id: 22, name: "Los Chapos Tacos", cat: ["Mexican", "Latin", "Takeout"], rating: 4.4, sincerity: 88, ownership: "Independent", format: "Counter service", hours: "See current hours (usually lunch–evening)", phone: "(727) 247-3636", address: "226 Oakfield Dr, Brandon", cost: 12, opened: "2010s", busy: 65, delivery: ["DoorDash", "Uber Eats"], alcohol: "None", sportsTV: false, wait: "8–15 min", specials: "Daily taco specials", topDish: "Carne asada or al pastor tacos", notes: "Authentic street-style tacos. Locals hunt this spot for real flavor.", website: "https://loschapostacos.com/locations", lat: 27.934259, lng: -82.287389 },
+
+      // Italian / Pizza
+      { id: 23, name: "Allegria Italiana", cat: ["Italian"], rating: 4.6, sincerity: 90, ownership: "Family", format: "Sit-down", hours: "Tue–Sun 4–9", phone: "(813) 689-0000", address: "518 Oakfield Dr, Brandon", cost: 28, opened: "2010s", busy: 60, delivery: [], alcohol: "Beer & wine", sportsTV: false, wait: "15–25 min", specials: "Tue–Thu pasta specials", topDish: "Lasagna or handmade pasta", notes: "Handmade pasta and lasagna get frequent sincere praise. Quiet, good for date night.", lat: 27.933864, lng: -82.291808 },
+      { id: 24, name: "Carrabba's Italian Grill", cat: ["Italian", "Pizza"], rating: 4.2, sincerity: 78, ownership: "Corporate", format: "Sit-down", hours: "Mon–Thu 11–10, Fri–Sat 11–11, Sun 11–10", phone: "(813) 657-8166", address: "801 Providence Rd, Brandon", cost: 24, opened: "1990s", busy: 70, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "12–22 min", specials: "Happy hour; pasta specials", topDish: "Chicken Bryan", notes: "Reliable Italian chain. Full bar, family-friendly.", website: "https://locations.carrabbas.com/florida/brandon/801-providence-road", lat: 27.925311, lng: -82.314939 },
+      { id: 25, name: "Josephine's Italian Market", cat: ["Italian", "Takeout"], rating: 4.9, sincerity: 94, ownership: "Family", format: "Counter service", hours: "Mon–Sat 9–9, Sun 10–3", phone: "(813) 683-0209", address: "730 W Brandon Blvd, Brandon", cost: 15, opened: "2024", busy: 50, delivery: [], alcohol: "Beer & wine", sportsTV: false, wait: "5–15 min", specials: "Italian sandwiches, pizza, gelato", topDish: "Italian sub or Roman pizza", notes: "Authentic Italian market & deli. High-quality imported products and excellent sandwiches.", website: "https://josephinesitalianmarket.com", lat: 27.937816, lng: -82.294400 },
+
+      // Cajun / American / Burgers / Sports
+      { id: 26, name: "Tibby's New Orleans Kitchen", cat: ["Cajun", "American"], rating: 4.5, sincerity: 88, ownership: "Family", format: "Sit-down", hours: "Mon–Thu 11–9, Fri–Sat 11–10, Sun 10–9", phone: "(813) 315-8443", address: "1721 W Brandon Blvd, Brandon", cost: 26, opened: "2008", busy: 78, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "15–30 min", specials: "Happy hour; Sunday brunch with live music", topDish: "Gumbo or Po'boy", notes: "Family-owned by New Orleans natives. Gumbo and po'boys get raves.", lat: 27.937669, lng: -82.310775 },
+      { id: 27, name: "The Stein & Vine", cat: ["American", "Burgers", "Sports Bar"], rating: 4.6, sincerity: 89, ownership: "Independent", format: "Sit-down", hours: "Sun–Tue 12–9, Wed–Thu 12–10, Fri–Sat 12–11", phone: "(813) 655-4786", address: "827 W Bloomingdale Ave, Brandon", cost: 18, opened: "2012", busy: 75, delivery: ["DoorDash"], alcohol: "Full bar", sportsTV: true, wait: "10–25 min", specials: "Daily chef specials; craft beer & wine", topDish: "Burgers or seasonal specials", notes: "Neighborhood favorite for creative American food and craft beer. High sincerity.", lat: 27.892789, lng: -82.295212 },
+      { id: 28, name: "The Landing Bar & Grill", cat: ["American", "Seafood", "Sports Bar", "Burgers"], rating: 4.2, sincerity: 80, ownership: "Independent", format: "Sit-down", hours: "Mon–Tue 3pm–12am, Wed–Sun 11am–12am", phone: "(813) 653-0002", address: "4351 Lynx Paw Trail, Valrico", cost: 18, opened: "2010s", busy: 75, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "10–20 min", specials: "Happy hour; wing specials on game days", topDish: "Wings, burgers, or pizza", notes: "Neighborhood bar & grill with Buffalo NY influence. Lots of TVs, outdoor patio.", website: "https://lovethelanding.com", lat: 27.920000, lng: -82.250000 },
+      { id: 29, name: "Ford's Garage Brandon", cat: ["Burgers", "American", "Sports Bar"], rating: 4.1, sincerity: 76, ownership: "Corporate", format: "Sit-down", hours: "Sun–Thu 11–10, Fri–Sat 11–11", phone: "(813) 661-3673", address: "11105 Causeway Blvd, Brandon", cost: 18, opened: "2010s", busy: 80, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "15–30 min", specials: "Happy hour Mon–Fri 2–6; burger & beer specials", topDish: "Signature burgers", notes: "Car-themed burger joint. Big burgers, shakes, lots of TVs. Loud when busy.", website: "https://fordsgarageusa.com/locations/brandon/", lat: 27.922575, lng: -82.326351 },
+
+      // Mediterranean / Breakfast
+      { id: 30, name: "Petra Mediterranean", cat: ["Mediterranean", "American"], rating: 4.5, sincerity: 86, ownership: "Independent", format: "Sit-down", hours: "See listing", phone: "See listing", address: "Causeway Blvd area", cost: 20, opened: "2010s", busy: 58, delivery: ["DoorDash", "Uber Eats"], alcohol: "Beer & wine", sportsTV: false, wait: "10–18 min", specials: "Lunch platters Mon–Fri", topDish: "Mixed Grill platter", notes: "Mixed grill, falafel, and fresh salads. Healthy options with bold flavors.", lat: 27.9500, lng: -82.2900 },
+      { id: 31, name: "Jerusalem Grill", cat: ["Mediterranean", "Middle Eastern"], rating: 4.6, sincerity: 90, ownership: "Independent", format: "Counter service", hours: "See listing", phone: "See listing", address: "1150 E Bloomingdale Ave, Valrico", cost: 15, opened: "2010s", busy: 55, delivery: ["DoorDash"], alcohol: "None", sportsTV: false, wait: "8–15 min", specials: "Lunch platters", topDish: "Shawarma or mixed grill", notes: "High sincerity Middle Eastern. Fresh, generous portions, friendly staff.", lat: 27.894500, lng: -82.255500 },
+      { id: 32, name: "The Breakfast Company", cat: ["Breakfast", "American"], rating: 4.5, sincerity: 88, ownership: "Independent", format: "Sit-down", hours: "Daily 7–2", phone: "See listing", address: "Brandon / Valrico", cost: 14, opened: "2010s", busy: 85, delivery: [], alcohol: "None", sportsTV: false, wait: "15–35 min (weekends longer)", specials: "Daily breakfast specials", topDish: "Pancakes or omelet plates", notes: "Local favorite for pancakes, omelets, and biscuits. Arrive early on weekends.", lat: 27.9390, lng: -82.2750 },
+      { id: 33, name: "Maple Street Biscuit Company", cat: ["Breakfast", "American"], rating: 4.4, sincerity: 85, ownership: "Corporate", format: "Counter service", hours: "Mon–Fri 7–2, Sat–Sun 7–3", phone: "(813) 409-3583", address: "127 W Bloomingdale Ave, Brandon", cost: 13, opened: "2010s", busy: 75, delivery: [], alcohol: "None", sportsTV: false, wait: "10–20 min", specials: "Biscuit sandwiches & gravy", topDish: "Signature biscuit sandwiches", notes: "Fast-casual biscuits with creative toppings. Popular morning stop.", website: "https://www.maplestreetbiscuits.com/", lat: 27.893541, lng: -82.289869 },
+
+      // More coverage
+      { id: 34, name: "Miller's Ale House - Brandon", cat: ["American", "Sports Bar", "Burgers"], rating: 4.0, sincerity: 77, ownership: "Corporate", format: "Sit-down", hours: "Sun–Thu 11–1am, Fri–Sat 11–2am", phone: "(813) 643-0511", address: "1817 W Brandon Blvd, Brandon", cost: 18, opened: "2000s", busy: 70, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "12–25 min", specials: "Happy hour; wing specials", topDish: "Wings or burgers", notes: "Sports-bar chain with big TV walls. Reliable for groups watching games.", website: "https://millersalehouse.com/locations/brandon/", lat: 27.937661, lng: -82.312667 },
+      { id: 35, name: "Himes Breakfast House", cat: ["Breakfast", "American"], rating: 4.5, sincerity: 89, ownership: "Independent", format: "Sit-down", hours: "Tue–Sun 7–2 (closed Mon)", phone: "(813) 692-6637", address: "312 E Brandon Blvd, Brandon", cost: 15, opened: "2021", busy: 80, delivery: ["DoorDash", "Uber Eats"], alcohol: "None", sportsTV: false, wait: "15–30 min (weekends longer)", specials: "Chef-inspired southern breakfast & brunch", topDish: "Jesse Bowl or Cali Benny", notes: "Newer local favorite for southern-style breakfast and brunch. Friendly service and solid portions.", website: "https://www.himesbreakfasthouse.com/himes-location-brandon-fl", lat: 27.937787, lng: -82.283251 },
+
+      // Chicken / Fast Food
+      { id: 36, name: "Chick-fil-A E. Brandon/Valrico", cat: ["Chicken", "Fast Food", "American"], rating: 4.5, sincerity: 88, ownership: "Corporate", format: "Counter service", hours: "Mon–Sat 6am–10pm (closed Sun)", phone: "(813) 661-2300", address: "1504 E Brandon Blvd, Brandon", cost: 12, opened: "2010s", busy: 85, delivery: ["DoorDash", "Uber Eats"], alcohol: "None", sportsTV: false, wait: "5–15 min (drive-thru longer at peaks)", specials: "Chick-fil-A One rewards; free kids meal promos some nights", topDish: "Chicken Sandwich or Nuggets", notes: "Consistently high sincerity for service and consistency. Closed Sundays. Very popular local favorite.", website: "https://www.chick-fil-a.com/locations/fl/e-brandon-valrico", lat: 27.938394, lng: -82.262917 },
+      { id: 37, name: "Zaxby's", cat: ["Chicken", "Fast Food"], rating: 4.0, sincerity: 79, ownership: "Corporate", format: "Counter service", hours: "Daily 10–9:30 or 10", phone: "(813) 657-6363", address: "2028 E Brandon Blvd, Valrico", cost: 13, opened: "2010s", busy: 70, delivery: ["DoorDash", "Uber Eats"], alcohol: "None", sportsTV: false, wait: "8–18 min", specials: "Sauce variety; family meals", topDish: "Chicken Fingerz or Zalad", notes: "Hand-breaded chicken fingers and wings with lots of sauce options. Solid fast-casual chicken.", website: "https://www.zaxbys.com", lat: 27.9378, lng: -82.2300 },
+      { id: 38, name: "Popeyes Louisiana Kitchen", cat: ["Chicken", "Fast Food", "Cajun"], rating: 4.1, sincerity: 80, ownership: "Corporate", format: "Counter service", hours: "Daily ~10am–10/11pm", phone: "(813) 733-0867", address: "515 Brandon Town Center Dr, Brandon", cost: 12, opened: "2010s", busy: 75, delivery: ["DoorDash", "Uber Eats", "Grubhub"], alcohol: "None", sportsTV: false, wait: "8–20 min", specials: "Chicken sandwich & family meals", topDish: "Classic or Spicy Chicken Sandwich / Bone-in chicken", notes: "Famous for spicy Cajun-style fried chicken and the chicken sandwich. Busy at lunch.", website: "https://www.popeyes.com", lat: 27.9385, lng: -82.3250 }
+    ];
+
+    // ——— Gas stations (Brandon / Valrico area – prices approximate, verify live) ———
+    const gasStations = [
+      { id: "g1", name: "Costco Gas", address: "10921 Causeway Blvd, Brandon", lat: 27.9220, lng: -82.3250, regular: 3.65, mid: 3.95, premium: 4.43, diesel: null, note: "Membership required" },
+      { id: "g2", name: "Murphy USA", address: "1110 E Brandon Blvd, Brandon", lat: 27.9375, lng: -82.2700, regular: 3.64, mid: 4.05, premium: 4.35, diesel: 5.10, note: "Often competitive" },
+      { id: "g3", name: "RaceTrac", address: "699 W Lumsden Rd, Brandon", lat: 27.9100, lng: -82.3000, regular: 3.75, mid: 4.15, premium: 4.45, diesel: 5.36, note: "24 hours" },
+      { id: "g4", name: "Shell", address: "965 E Brandon Blvd, Brandon", lat: 27.9376, lng: -82.2750, regular: 3.70, mid: 4.10, premium: 4.40, diesel: null, note: "" },
+      { id: "g5", name: "Wawa", address: "1710 W Brandon Blvd, Brandon", lat: 27.9377, lng: -82.3100, regular: 3.78, mid: 4.20, premium: 4.50, diesel: null, note: "Food + gas" },
+      { id: "g6", name: "7-Eleven", address: "700 W Brandon Blvd, Brandon", lat: 27.9378, lng: -82.2950, regular: 3.77, mid: 4.22, premium: 4.52, diesel: null, note: "" },
+      { id: "g7", name: "Thorntons", address: "425 E Brandon Blvd, Brandon", lat: 27.9377, lng: -82.2820, regular: 3.72, mid: 4.12, premium: 4.42, diesel: null, note: "" },
+      { id: "g8", name: "Mobil", address: "936 E Bloomingdale Ave, Brandon", lat: 27.8930, lng: -82.2900, regular: 3.80, mid: 4.25, premium: 4.55, diesel: null, note: "" },
+      { id: "g9", name: "Shell (Valrico)", address: "2104 E Brandon Blvd / FL-60, Valrico", lat: 27.9378, lng: -82.2350, regular: 3.70, mid: 4.15, premium: 4.45, diesel: 5.20, note: "" },
+      { id: "g10", name: "RaceTrac Causeway", address: "10324 Causeway Blvd, Brandon", lat: 27.9250, lng: -82.3300, regular: 3.76, mid: 4.18, premium: 4.48, diesel: null, note: "" }
+    ];
+
+    let selectedFuel = "regular";
+
+    // Emergency static places for major FL cities (used only if live APIs fail)
+    const emergencyPlaces = [
+      // Downtown Orlando / 32801 area
+      { name: "The Boheme", cat: ["American", "Fine Dining"], lat: 28.5411, lng: -81.3768, address: "325 S Orange Ave, Orlando", cuisine: "American", source: "static" },
+      { name: "Kres Chophouse", cat: ["Steakhouse"], lat: 28.5420, lng: -81.3790, address: "17 W Church St, Orlando", cuisine: "Steak", source: "static" },
+      { name: "Capa (Four Seasons)", cat: ["Steakhouse", "Spanish"], lat: 28.4255, lng: -81.4690, address: "10100 Dream Tree Blvd, Orlando", cuisine: "Steakhouse", source: "static" },
+      { name: "Se7en Bites", cat: ["Breakfast", "American"], lat: 28.5435, lng: -81.3680, address: "617 N Thornton Ave, Orlando", cuisine: "Breakfast", source: "static" },
+      { name: "Maxine's on Shine", cat: ["American", "Seafood"], lat: 28.5480, lng: -81.3610, address: "337 N Shine Ave, Orlando", cuisine: "American", source: "static" },
+      { name: "The Ravenous Pig", cat: ["American", "Gastropub"], lat: 28.5960, lng: -81.3560, address: "1234 N Orange Ave, Winter Park", cuisine: "American", source: "static" },
+      { name: "Hawkers Asian Street Food", cat: ["Asian", "Street Food"], lat: 28.5540, lng: -81.3650, address: "5103 E Colonial Dr, Orlando", cuisine: "Asian", source: "static" },
+      { name: "Domu", cat: ["Asian", "Ramen"], lat: 28.5640, lng: -81.3250, address: "390 N Orange Ave suite 110, Orlando", cuisine: "Ramen", source: "static" },
+      // A couple Tampa ones just in case
+      { name: "Bern's Steak House", cat: ["Steakhouse"], lat: 27.9320, lng: -82.4820, address: "1208 S Howard Ave, Tampa", cuisine: "Steak", source: "static" },
+      { name: "Ulele", cat: ["American", "Seafood"], lat: 27.9600, lng: -82.4640, address: "1810 N Highland Ave, Tampa", cuisine: "American", source: "static" }
+    ];
+
+
+    // ——— Kids eat free / kids discount deals (re-verified Nov 10, 2026; Red Robin promo ended Nov 4; participation varies) ———
+    // days: 0=Sun … 6=Sat, or "daily". Matched by restaurant name (curated + live).
+    const FF = "https://fabulessly-frugal.com/kids-eat-free-deals/"; // guide updated Oct 21, 2026
+    const KIDS_DEALS = [
+      { re: /outback/i, days: [1], text: "Mon: 1 free kids meal per full-price adult entrée (say “FREE JOEY MEAL”; online code JOEYFREE)", src: "https://www.outback.com/offers/Kids-Eat-Free" },
+      { re: /miller'?s ale house/i, days: [2], text: "Tue: kids 12 & under eat free, up to 2 kids meals per check with $10 adult food purchase, dine-in", src: "https://millersalehouse.com/specials/" },
+      { re: /duke'?s brewhouse/i, days: [1], text: "Mon: kids eat free (Brandon location calendar)", src: "https://client.clipp.com/businesses/181030/duke-s-brewhouse-brandon" },
+      { re: /denny'?s/i, days: "daily", text: "Daily 4–10 PM: up to 2 free kids meals per $6+ adult entrée, dine-in (participating locations)", src: FF },
+      { re: /\bihop\b/i, days: "daily", text: "Daily 4–10 PM: kids 12 & under free kids entrée with adult entrée (participating locations)", src: FF },
+      { re: /bob evans/i, days: [2], text: "Tue (after 4 PM, app orders): free kids meal per adult entrée, max 3", src: FF },
+      { re: /texas roadhouse/i, days: [1], text: "Mon 4 PM–close: kids 12 & under eat free with adult entrée (some locations also Tue) — call to confirm", src: FF },
+      { re: /smashburger/i, days: [3], text: "Wed: kids eat free deal (participating locations)", src: FF },
+      { re: /mod pizza/i, days: [0], text: "Sun: kids eat free deal (participating locations)", src: FF },
+      { re: /dickey'?s/i, days: [0], text: "Sun: kids eat free deal (participating locations)", src: FF },
+      { re: /pizza ranch/i, days: [2], text: "Tue night: free kids buffet per regular adult buffet", src: FF },
+      { re: /tgi friday/i, days: [2], text: "Tue: free kids meal (12 & under) with adult entrée (some locations use another night)", src: FF },
+      { re: /main event/i, days: [2], text: "Tue: kids 12 & under eat free with $11.99+ menu item (not Orlando)", src: FF },
+      { re: /famous dave'?s/i, days: [2], text: "Tue: free Lil’ Wilbur meal with adult entrée, dine-in", src: FF },
+      { re: /shari'?s/i, days: [2], text: "Tue: kids under 10 free kids meal with adult entrée", src: FF },
+      { re: /cody'?s original roadhouse/i, days: [2], text: "Tue: 1 child (10 & under) eats free per adult entrée", src: FF },
+      { re: /fogo de ch/i, days: "daily", text: "Daily: kids 6 & under eat free, 7–12 half price", src: FF },
+      { re: /tucanos/i, days: "daily", text: "Daily: kids 6 & under eat free with paying adult", src: FF },
+      { re: /tony roma/i, days: "daily", text: "Daily: kids 12 & under eat free per adult entrée (max 2/family)", src: FF },
+      { re: /golden corral/i, days: "daily", text: "Daily: kids 3 & under eat free at buffet (up to 2 per adult)", src: FF },
+      { re: /cicis/i, days: "daily", text: "Daily: kids 3 & under eat free at buffet", src: FF },
+      { re: /chili'?s/i, days: "rewards", text: "Free kids meal offers for My Chili’s Rewards members (via app/email)", src: FF },
+      { re: /moe'?s southwest/i, days: "rewards", text: "Moe Rewards: weekly free kids meal offer with entrée", src: FF },
+      { re: /zaxby'?s/i, days: "varies", text: "Some locations run a Mon or Tue kids night — not confirmed for this location, call ahead", src: "https://www.marietta.com/kids-eat-free" }
+    ];
+    const DAY_ABBR = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    function kidsDealFor(name) { return KIDS_DEALS.find(d => d.re.test(name || "")) || null; }
+    function kidsToday(deal, day = new Date().getDay()) {
+      return !!deal && (deal.days === "daily" || (Array.isArray(deal.days) && deal.days.includes(day)));
+    }
+    function kidsLine(name) {
+      const d = kidsDealFor(name);
+      if (!d) return `<div class="info-row kids-row muted">👶 Kids deals: none verified — ask the restaurant</div>`;
+      const today = kidsToday(d) ? ` <span class="badge kids-today">TODAY</span>` : "";
+      return `<div class="info-row kids-row">👶 <strong>Kids:</strong> ${d.text}${today} <a href="${d.src}" target="_blank" rel="noopener">source</a> <span class="muted">· participation varies, confirm first</span></div>`;
+    }
+    function passesKidsFilter(name) {
+      const f = (document.getElementById("kidsFilter") || {}).value || "off";
+      if (f === "off") return true;
+      const d = kidsDealFor(name);
+      if (f === "any") return !!d && d.days !== "varies";
+      return kidsToday(d);
+    }
+
+    let locSeq = 0; // bumps on every new location request so stale GPS answers cannot override a ZIP
+    // ——— Location logic (never hangs) ———
+    function setLocUI(title, detail, isError = false) {
+      document.getElementById("locTitle").textContent = title;
+      document.getElementById("locDetail").textContent = detail;
+      document.getElementById("locStatus").style.opacity = isError ? "0.85" : "1";
+    }
+
+    function clearTimers() {
+      if (locationTimer) { clearTimeout(locationTimer); locationTimer = null; }
+      if (outerTimer) { clearTimeout(outerTimer); outerTimer = null; }
+    }
+
+    function applyFallback(reason) {
+      // No more silent lock to Brandon: ask for a ZIP instead (works anywhere in the USA)
+      if (!userPos) {
+        setLocUI("Location not available", reason + " · Enter any US ZIP code below, or tap the button to retry", true);
+      } else {
+        setLocUI("Kept last location", reason + " · " + userPos.lat.toFixed(4) + ", " + userPos.lng.toFixed(4));
+      }
+    }
+
+    // Friendly place name for coordinates (non-fatal if it fails)
+    async function labelForCoords(lat, lng) {
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10`, { headers: { "Accept": "application/json" } });
+        if (!r.ok) return "";
+        const d = await r.json();
+        const a = d.address || {};
+        const city = a.city || a.town || a.village || a.hamlet || a.county || "";
+        return [city, a.state, a.postcode].filter(Boolean).join(", ");
+      } catch (e) { return ""; }
+    }
+
+    function requestLocation(fromButton = false) {
+      clearTimers();
+
+      if (!navigator.geolocation) {
+        applyFallback("browser has no geolocation");
+        return;
+      }
+
+      const mySeq = ++locSeq;
+      setLocUI("Detecting…", fromButton ? "Please allow location when prompted" : "Trying device GPS…");
+
+      const geoOptions = {
+        enableHighAccuracy: fromButton, // higher accuracy when user explicitly taps the button
+        timeout: fromButton ? 12000 : 8000,
+        maximumAge: fromButton ? 30000 : 120000
+      };
+
+      let settled = false;
+
+      function finish(success, posOrErr) {
+        if (settled) return;
+        settled = true;
+        if (mySeq !== locSeq) return; // superseded by a ZIP search or newer request
+        clearTimers();
+
+        if (success && posOrErr && posOrErr.coords) {
+          userPos = {
+            lat: posOrErr.coords.latitude,
+            lng: posOrErr.coords.longitude
+          };
+          const acc = Math.round(posOrErr.coords.accuracy || 0);
+          const coordTxt = userPos.lat.toFixed(4) + ", " + userPos.lng.toFixed(4) + (acc ? " (±" + acc + " m)" : "");
+          setLocUI("Location found", coordTxt);
+          const here = { ...userPos };
+          labelForCoords(here.lat, here.lng).then(lbl => {
+            if (lbl && userPos && userPos.lat === here.lat && userPos.lng === here.lng) setLocUI("Location found", lbl + " · " + coordTxt);
+          });
+        } else {
+          let msg = "permission or signal issue";
+          if (posOrErr && posOrErr.code) {
+            if (posOrErr.code === 1) msg = "permission denied";
+            else if (posOrErr.code === 2) msg = "position unavailable";
+            else if (posOrErr.code === 3) msg = "timed out";
+          }
+          applyFallback(msg);
+        }
+      }
+
+      outerTimer = setTimeout(() => {
+        finish(false, { code: 3, message: "outer timeout" });
+      }, fromButton ? 15000 : 11000);
+
+      try {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => finish(true, pos),
+          (err) => finish(false, err),
+          geoOptions
+        );
+      } catch (e) {
+        finish(false, { code: 2, message: "exception" });
+      }
+    }
+
+    function onRangeChange() {
+      selectedRange = parseFloat(document.getElementById("rangeSelect").value) || 10;
+    }
+
+    // ——— Distance helper ———
+    function milesBetween(lat1, lng1, lat2, lng2) {
+      const R = 3958.8;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 +
+                Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) *
+                Math.sin(dLng/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    // ——— Ranking (always refreshes with current location + selected range) ———
+    function scourAndRank() {
+      const btn = document.getElementById("scourBtn");
+      btn.disabled = true;
+      btn.textContent = "Scouring…";
+
+      selectedRange = parseFloat(document.getElementById("rangeSelect").value) || 10;
+      if (!userPos) {
+        document.getElementById("results").innerHTML =
+          `<div class="empty">We need your location first.<br>Tap <strong>Use my location</strong> (and Allow), or enter any US ZIP code above and press Go.</div>`;
+        btn.disabled = false;
+        btn.textContent = "Scour Reviews & Rank";
+        return;
+      }
+      const origin = userPos;
+
+      // 1. Try curated local list first
+      let list = restaurants.filter(r => (selectedCat === "all" || r.cat.includes(selectedCat)) && passesKidsFilter(r.name));
+      list = list.map(r => {
+        const dist = milesBetween(origin.lat, origin.lng, r.lat, r.lng);
+        return { ...r, dist };
+      }).filter(r => r.dist <= selectedRange);
+
+      list = list.map(r => {
+        const score = (r.sincerity * 0.55) + (r.rating * 8) - (r.dist * 1.8);
+        return { ...r, score };
+      });
+      list.sort((a, b) => b.score - a.score);
+
+      document.getElementById("mapWrap").classList.remove("visible");
+
+      if (list.length > 0) {
+        // Rich curated rankings, but replace stale hardcoded pins with live OSM
+        // node/entrance coordinates when we can (and never navigate by those old pins).
+        const top5 = list.slice(0, 5).map(flagCuratedConfidence);
+        renderResults(top5, list.length);
+        refreshMap(top5);
+        btn.textContent = "Updating map locations…";
+        fetchOverpassRestaurants(origin.lat, origin.lng, selectedRange, selectedCat)
+          .then(osmList => {
+            const merged = mergeLiveCoords(top5, osmList || []);
+            renderResults(merged, list.length);
+            refreshMap(merged);
+          })
+          .catch(() => {
+            refreshMap(top5);
+          })
+          .finally(() => {
+            btn.disabled = false;
+            btn.textContent = "Scour Reviews & Rank";
+          });
+        return;
+      }
+
+      // No curated restaurants in range → fetch live from OpenStreetMap (Overpass)
+      btn.textContent = "Searching area…";
+      document.getElementById("results").innerHTML =
+        `<div class="empty">Searching nearby restaurants…<br>This can take a few seconds.</div>`;
+      fetchOverpassRestaurants(origin.lat, origin.lng, selectedRange, selectedCat)
+        .then(osmList => {
+          osmList = (osmList || []).filter(r => matchesCategory(r, selectedCat) && passesKidsFilter(r.name));
+          if (!osmList.length) {
+            const kf = document.getElementById("kidsFilter").value;
+            const catTxt = (selectedCat === "all" ? "restaurants" : selectedCat + " places") + (kf === "today" ? " with a kids-eat-free deal today" : kf === "any" ? " with a known kids deal" : "");
+            document.getElementById("results").innerHTML =
+              `<div class="empty">No ${catTxt} found within ${selectedRange} miles of this location.<br>Try a larger radius, another category, or a different ZIP.</div>`;
+            document.getElementById("mapWrap").classList.remove("visible");
+          } else {
+            // Rank with the app's guidelines using what live data provides
+            osmList.forEach(r => { r.score = liveScore(r, selectedRange); });
+            osmList.sort((a, b) => b.score - a.score);
+            renderOsmResults(osmList.slice(0, 10), osmList.length);
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          // Last resort: use small emergency static list for major cities
+          const emergency = (typeof emergencyPlaces !== "undefined" ? emergencyPlaces : [])
+            .map(r => {
+              const dist = milesBetween(origin.lat, origin.lng, r.lat, r.lng);
+              return { ...r, dist, locConfidence: "low" };
+            })
+            .filter(r => r.dist <= selectedRange + 2)
+            .sort((a, b) => a.dist - b.dist)
+            .slice(0, 8);
+
+          if (emergency.length) {
+            renderOsmResults(emergency, emergency.length);
+            // Add a small note that this is fallback data
+            const note = document.createElement("div");
+            note.className = "top-note";
+            note.style.color = "#b45309";
+            note.innerHTML = "Live map data temporarily unavailable – showing curated backup places for this area.";
+            document.getElementById("results").prepend(note);
+          } else {
+            document.getElementById("results").innerHTML =
+              `<div class="empty">Could not reach live map data for this area right now.<br><br>
+              The free map servers are busy or blocked.<br>
+              You can wait a moment and try again, or try a smaller radius (busy cities return a lot of data).<br><br>
+              We’re using free public data sources so occasional outages happen.<br><br>
+              <button class="scour-btn" type="button" onclick="scourAndRank()">Try again</button></div>`;
+          }
+        })
+        .finally(() => {
+          btn.disabled = false;
+          btn.textContent = "Scour Reviews & Rank";
+        });
+    }
+
+        
+    // ——— Live restaurant lookup (nationwide, free OpenStreetMap sources) ———
+    // Category → OpenStreetMap tag rules (cuisine / name regex, case-insensitive)
+    const CAT_RULES = {
+      "BBQ":          { cuisine: "barbecue|bbq|smokehouse", name: "bbq|barbecue|barbeque|smokehouse" },
+      "Steakhouse":   { cuisine: "steak", name: "steak|chophouse" },
+      "Seafood":      { cuisine: "seafood|fish|oyster|crab|lobster|poke", name: "seafood|fish|oyster|crab|lobster|shrimp" },
+      "Sushi":        { cuisine: "sushi", name: "sushi" },
+      "Asian":        { cuisine: "asian|chinese|japanese|thai|vietnamese|korean|sushi|ramen|noodle|pho|filipino|malaysian|indonesian|dim_sum|hawaiian|poke", name: "asian|wok|noodle|ramen|pho|hibachi|teriyaki" },
+      "Thai":         { cuisine: "thai", name: "thai" },
+      "Vietnamese":   { cuisine: "vietnamese|pho", name: "pho|vietnam|banh mi" },
+      "Chinese":      { cuisine: "chinese|dim_sum|cantonese|szechuan|sichuan", name: "chinese|china|wok|dumpling|szechuan|hunan" },
+      "Indian":       { cuisine: "indian|pakistani|nepalese|bangladeshi|curry", name: "india|tandoor|curry|masala" },
+      "Mexican":      { cuisine: "mexican|tex-mex|taco|burrito", name: "taco|taqueria|mexican|burrito|cantina" },
+      "Latin":        { cuisine: "latin|cuban|peruvian|colombian|puerto_rican|brazilian|salvadoran|venezuelan|dominican|caribbean|argentin|spanish|mexican", name: "cuban|latin|empanada|arepa|peruvian|brazil|pupuseria" },
+      "Italian":      { cuisine: "italian|pizza|pasta", name: "italian|trattoria|pasta|ristorante|osteria" },
+      "Pizza":        { cuisine: "pizza", name: "pizza|pizzeria" },
+      "Burgers":      { cuisine: "burger", name: "burger" },
+      "Chicken":      { cuisine: "chicken|wings|fried_chicken", name: "chicken|wings|chick-fil-a|popeyes|zaxby|kfc|wingstop" },
+      "Fast Food":    { amenity: "fast_food" },
+      "Cajun":        { cuisine: "cajun|creole|louisiana", name: "cajun|creole|bayou|crawfish|boil" },
+      "American":     { cuisine: "american|burger|diner|barbecue|steak|chicken|regional|southern|soul", name: "grill|diner|kitchen|tavern" },
+      "Mediterranean":{ cuisine: "mediterranean|greek|lebanese|middle_eastern|turkish|falafel|kebab|persian|arab", name: "mediterranean|greek|gyro|falafel|kebab|shawarma" },
+      "Sports Bar":   { sports: true, name: "sports|ale house|wings|tavern|pub" },
+      "Breakfast":    { cuisine: "breakfast|brunch|pancake|diner|bagel|waffle", name: "breakfast|pancake|waffle|biscuit|brunch|diner|ihop|denny|cracker barrel" },
+      "Takeout":      { takeout: true }
+    };
+
+    function matchesCategory(r, cat) {
+      if (!cat || cat === "all") return true;
+      if (r.source === "static") return (r.cat || []).includes(cat);
+      const rule = CAT_RULES[cat];
+      if (!rule) return true;
+      const t = r.tags || {};
+      if (rule.amenity) return t.amenity === rule.amenity;
+      if (rule.takeout) return t.amenity === "fast_food" || /yes|only/.test(t.takeaway || "");
+      if (rule.sports && (t.sport || /^(bar|pub)$/.test(t.amenity || "") && /sport/i.test(t.name || ""))) return true;
+      if (rule.cuisine && new RegExp(rule.cuisine, "i").test(t.cuisine || r.cuisine || "")) return true;
+      if (rule.name && new RegExp(rule.name, "i").test(r.name || "")) return true;
+      return false;
+    }
+
+    function buildOverpassQuery(lat, lng, radiusMeters, cat) {
+      const A = `[amenity~"^(restaurant|fast_food|cafe)$"]`;
+      const around = `(around:${radiusMeters},${lat},${lng})`;
+      const rule = (cat && cat !== "all") ? CAT_RULES[cat] : null;
+      let body;
+      const kf = (document.getElementById("kidsFilter") || {}).value || "off";
+      if (kf !== "off") {
+        // Only chains with a known kids deal: ask the server for those names directly
+        const names = "outback|miller.?s ale house|duke.?s brewhouse|denny|ihop|bob evans|texas roadhouse|smashburger|mod pizza|dickey|pizza ranch|tgi friday|main event|famous dave|shari.?s|cody.?s original|fogo de ch|tucanos|tony roma|golden corral|cicis|chili.?s|moe.?s southwest|zaxby";
+        body = `nwr["amenity"~"^(restaurant|fast_food|cafe|bar|pub)$"]["name"~"${names}",i]${around};`;
+      }
+      else if (!rule) body = `nwr${A}${around};`;
+      else if (rule.amenity) body = `nwr["amenity"="${rule.amenity}"]${around};`;
+      else if (rule.takeout) body = `nwr["amenity"="fast_food"]${around};nwr${A}["takeaway"~"yes|only"]${around};`;
+      else {
+        body = "";
+        if (rule.sports) body += `nwr["amenity"~"^(bar|pub|restaurant)$"]["sport"]${around};`;
+        if (rule.cuisine) body += `nwr${A}["cuisine"~"${rule.cuisine}",i]${around};`;
+        if (rule.name) body += `nwr["amenity"~"^(restaurant|fast_food|cafe|bar|pub)$"]["name"~"${rule.name}",i]${around};`;
+      }
+      // out center: a point for buildings (ways). Also pull entrance nodes so pins
+      // are not the centroid of a plaza or parking lot.
+      return `[out:json][timeout:25];(${body})->.pois;.pois out center tags qt 400;node(w.pois)["entrance"];out tags;`;
+    }
+
+    async function fetchOverpassRestaurants(lat, lng, radiusMiles, cat = "all") {
+      // 1. Overpass (OpenStreetMap) – primary, covers every US ZIP
+      try {
+        const results = await tryOverpass(lat, lng, radiusMiles, cat);
+        if (results && results.length) return results;
+        if (results) return results; // valid empty answer
+      } catch (e) {
+        console.warn("Overpass failed:", e.message || e);
+      }
+      // 2. Fallback: Nominatim search near the point
+      try {
+        const results = await tryNominatimRestaurants(lat, lng, radiusMiles, cat);
+        if (results && results.length) return results;
+      } catch (e) {
+        console.warn("Nominatim restaurants failed:", e.message || e);
+      }
+      throw new Error("All live sources failed");
+    }
+
+    const OVP_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+    const OVP_CACHE_PREFIX = "foodie:ovp:";
+
+    function ovpCacheKey(lat, lng, radiusMiles, cat) {
+      const kf = ((document.getElementById("kidsFilter") || {}).value || "off");
+      return OVP_CACHE_PREFIX + lat.toFixed(3) + "," + lng.toFixed(3) + ":" + radiusMiles + ":" + cat + ":" + kf;
+    }
+    function readOvpCache(key) {
+      for (const store of [localStorage, sessionStorage]) {
+        try {
+          const c = JSON.parse(store.getItem(key) || "null");
+          if (c && Date.now() - c.t < OVP_CACHE_TTL && Array.isArray(c.e)) return c.e;
+        } catch (e) {}
+      }
+      return null;
+    }
+    function writeOvpCache(key, elements) {
+      const payload = JSON.stringify({ t: Date.now(), e: elements });
+      const trySet = (store) => {
+        try { store.setItem(key, payload); return true; }
+        catch (e) {
+          try {
+            const drop = [];
+            for (let i = 0; i < store.length; i++) {
+              const k = store.key(i);
+              if (k && k.indexOf(OVP_CACHE_PREFIX) === 0) drop.push(k);
+            }
+            drop.forEach(k => store.removeItem(k));
+            store.setItem(key, payload);
+            return true;
+          } catch (e2) { return false; }
+        }
+      };
+      trySet(localStorage);
+      trySet(sessionStorage);
+    }
+
+    async function queryOverpassEndpoints(query, timeoutMs) {
+      const endpoints = [
+        "https://overpass-api.de/api/interpreter",
+        "https://overpass.private.coffee/api/interpreter",
+        "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+        "https://overpass.kumi.systems/api/interpreter"
+      ];
+      const controllers = endpoints.map(() => new AbortController());
+      const attempt = async (url, i) => {
+        const timer = setTimeout(() => controllers[i].abort(), timeoutMs);
+        try {
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "data=" + encodeURIComponent(query),
+            signal: controllers[i].signal
+          });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const data = await res.json();
+          if (data.remark && /error|timed out|runtime/i.test(data.remark)) throw new Error(data.remark);
+          return { url, elements: data.elements || [] };
+        } finally { clearTimeout(timer); }
+      };
+      try {
+        const win = await Promise.any(endpoints.map(attempt));
+        controllers.forEach(c => c.abort());
+        return win;
+      } catch (agg) {
+        controllers.forEach(c => c.abort());
+        console.warn("Overpass wave failed", (agg.errors || []).map(e => e.message).join("; "));
+        return null;
+      }
+    }
+
+    async function tryOverpass(lat, lng, radiusMiles, cat) {
+      const radiusMeters = Math.round(radiusMiles * 1609.34); // full selected radius (up to 20 mi)
+      const query = buildOverpassQuery(lat, lng, radiusMeters, cat);
+      const cacheKey = ovpCacheKey(lat, lng, radiusMiles, cat);
+      const cached = readOvpCache(cacheKey);
+      if (cached) return parseOsmElements(cached, lat, lng, radiusMiles);
+
+      // First wave (25s), then one retry wave (35s) after a short pause — free servers are often busy
+      let win = await queryOverpassEndpoints(query, 25000);
+      if (!win) {
+        await new Promise(r => setTimeout(r, 1500));
+        win = await queryOverpassEndpoints(query, 35000);
+      }
+      if (!win) throw new Error("No Overpass server reachable");
+      writeOvpCache(cacheKey, win.elements);
+      const parsed = parseOsmElements(win.elements, lat, lng, radiusMiles);
+      console.log("Overpass success via", win.url, "→", parsed.length, "places");
+      return parsed;
+    }
+
+    async function tryNominatimRestaurants(lat, lng, radiusMiles, cat) {
+      const delta = radiusMiles / 69;
+      const dLng = delta / Math.max(0.2, Math.cos(lat * Math.PI / 180));
+      const viewbox = `${lng - dLng},${lat + delta},${lng + dLng},${lat - delta}`;
+      const q = (cat && cat !== "all" ? cat + " " : "") + "restaurant";
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=40&viewbox=${viewbox}&bounded=1&addressdetails=1&extratags=1`;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12000);
+      const res = await fetch(url, { headers: { "Accept": "application/json" }, signal: controller.signal });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error("Nominatim HTTP " + res.status);
+      const data = await res.json();
+      if (!Array.isArray(data)) return [];
+      const results = []; const seen = new Set();
+      for (const item of data) {
+        const name = item.name || (item.display_name ? item.display_name.split(",")[0].trim() : null);
+        if (!name || seen.has(name.toLowerCase())) continue;
+        seen.add(name.toLowerCase());
+        const rLat = parseFloat(item.lat), rLng = parseFloat(item.lon);
+        if (isNaN(rLat) || isNaN(rLng)) continue;
+        const dist = milesBetween(lat, lng, rLat, rLng);
+        if (dist > radiusMiles + 0.5) continue;
+        const a = item.address || {};
+        const tags = { ...(item.extratags || {}), amenity: item.type, name };
+        const addr = [[a.house_number, a.road].filter(Boolean).join(" "), [a.city || a.town || a.village, a.state, a.postcode].filter(Boolean).join(", ")].filter(Boolean).join(", ") || "See map";
+        results.push({
+          name, cat: ["Restaurant"], lat: rLat, lng: rLng, dist,
+          address: addr,
+          phone: tags.phone || "", website: tags.website || "", hours: tags.opening_hours || "",
+          cuisine: (tags.cuisine || "").replace(/_/g, " "), tags, chain: !!(tags.brand || tags["brand:wikidata"]),
+          source: "nominatim",
+          osmType: item.osm_type || "",
+          locConfidence: item.osm_type === "node" ? "high" : "low"
+        });
+      }
+      return results;
+    }
+
+    function escHtml(v) {
+      return String(v == null ? "" : v).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    }
+    function jsStr(v) {
+      return String(v == null ? "" : v).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+    }
+    function enrichUsAddress(address) {
+      const a = (address || "").trim();
+      if (!a || a === "See map") return a;
+      if (/,?\s*(FL|Florida|AL|AK|AZ|AR|CA|CO|CT|DC|DE|GA|HI|IA|ID|IL|IN|KS|KY|LA|MA|MD|ME|MI|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA|VT|WA|WI|WV)\b/i.test(a)) return a;
+      if (/Brandon|Valrico|Seffner/i.test(a)) return a + ", FL";
+      return a;
+    }
+    function hasStreetAddress(address) {
+      const a = (address || "").trim();
+      return !!(a && a !== "See map" && /\d/.test(a) && /[A-Za-z]/.test(a));
+    }
+    function isVagueAddress(address) {
+      const a = (address || "").trim();
+      return !a || a === "See map" || /corridor|\barea\b|brandon\s*\/\s*valrico/i.test(a) || !/\d/.test(a);
+    }
+    function directionsQuery(name, address) {
+      const n = (name || "").trim();
+      const a = enrichUsAddress(address);
+      if (hasStreetAddress(a)) return n ? (n + ", " + a) : a;
+      if (a && a !== "See map" && n) return n + ", " + a;
+      return n || a || "";
+    }
+    // Prefer a name + street-address search. Never append @lat,lng when we have an address —
+    // raw coordinates sent a user following Liang's to a parking lot (road-interpolated pin).
+    function directionsUrl(name, address, lat, lng) {
+      const q = directionsQuery(name, address);
+      if (q) return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q);
+      if (lat != null && lng != null) return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(lat + "," + lng);
+      return "#";
+    }
+    function addressFromTags(tags) {
+      const line1 = [tags["addr:housenumber"] || "", tags["addr:street"] || ""].filter(Boolean).join(" ").trim();
+      const city = tags["addr:city"] || "";
+      const state = tags["addr:state"] || "";
+      const zip = tags["addr:postcode"] || "";
+      const cityPart = [city, [state, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+      return [line1, cityPart].filter(Boolean).join(", ") || tags["addr:full"] || "";
+    }
+    function locBadge(r) {
+      if (r.locConfidence && r.locConfidence !== "high") {
+        return `<span class="badge">📍 Approximate location</span>`;
+      }
+      return "";
+    }
+    function normalizeName(n) {
+      return (n || "").toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").replace(/\b(the|restaurant|grill|bar|cafe|kitchen|bistro|house)\b/g, " ").replace(/\s+/g, " ").trim();
+    }
+    function namesMatch(a, b) {
+      const x = normalizeName(a), y = normalizeName(b);
+      if (!x || !y) return false;
+      if (x === y) return true;
+      if (x.length >= 4 && y.length >= 4 && (x.startsWith(y) || y.startsWith(x))) return true;
+      const x2 = x.split(" ").slice(0, 2).join(" ");
+      const y2 = y.split(" ").slice(0, 2).join(" ");
+      return x2.length >= 4 && (x2 === y2 || y.startsWith(x2) || x.startsWith(y2));
+    }
+    function flagCuratedConfidence(r) {
+      // Hardcoded pins in the original list were often road-centerline interpolations or
+      // plaza/parking centroids (Liang's landed on Providence Rd, next to Carrabba's).
+      // Until a live OSM node/entrance confirms them, treat the pin as approximate and
+      // send directions by name + street address only.
+      if (r.locConfidence) return r;
+      return { ...r, locConfidence: "low", locNote: "unverified curated coordinates" };
+    }
+    function mergeLiveCoords(list, osmList) {
+      return list.map(r => {
+        const hits = (osmList || []).filter(o => namesMatch(r.name, o.name));
+        if (!hits.length) return flagCuratedConfidence(r);
+        hits.sort((a, b) => (a.dist || 0) - (b.dist || 0));
+        const o = hits[0];
+        const addr = hasStreetAddress(o.address) ? o.address : r.address;
+        const dist = userPos ? milesBetween(userPos.lat, userPos.lng, o.lat, o.lng) : o.dist;
+        return {
+          ...r,
+          lat: o.lat, lng: o.lng, dist, address: addr,
+          locConfidence: o.locConfidence || "high",
+          osmType: o.osmType, locSource: "osm",
+          tags: o.tags || r.tags
+        };
+      });
+    }
+
+    function parseOsmElements(elements, originLat, originLng, radiusMiles) {
+      const entrances = [];
+      for (const el of elements) {
+        const tags = el.tags || {};
+        if (el.type === "node" && tags.entrance && el.lat != null && el.lon != null && !tags.amenity) {
+          entrances.push({ lat: el.lat, lng: el.lon, kind: String(tags.entrance) });
+        }
+      }
+      const seen = new Set();
+      const results = [];
+      for (const el of elements) {
+        const tags = el.tags || {};
+        const name = tags.name;
+        if (!name) continue;
+        if (tags.entrance && !tags.amenity) continue;
+        // Guideline: currently operating only
+        if (tags["disused:amenity"] || tags["was:amenity"] || tags.opening_hours === "closed" || tags["end_date"]) continue;
+        let rLat = el.lat, rLng = el.lon;
+        if (rLat == null || rLng == null) {
+          if (el.center) { rLat = el.center.lat; rLng = el.center.lon; }
+        }
+        if (rLat == null || rLng == null) continue;
+
+        let locConfidence = (el.type === "node") ? "high" : "low";
+        let osmType = el.type || "unknown";
+        // Ways/relations: prefer an entrance node over the building or plaza centroid
+        if (el.type !== "node" && entrances.length) {
+          let best = null, bestD = 0.09; // ~150 m
+          for (const e of entrances) {
+            const d = milesBetween(rLat, rLng, e.lat, e.lng);
+            const score = d - ((e.kind === "main" || e.kind === "yes") ? 0.002 : 0);
+            if (score < bestD) { bestD = score; best = e; }
+          }
+          if (best) {
+            rLat = best.lat; rLng = best.lng;
+            locConfidence = "high";
+            osmType = "entrance";
+          }
+        }
+
+        const dist = milesBetween(originLat, originLng, rLat, rLng);
+        if (dist > radiusMiles + 0.4) continue;
+        const key = name.toLowerCase().trim() + "|" + rLat.toFixed(4) + "," + rLng.toFixed(4);
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        const cuisine = tags.cuisine ? tags.cuisine.replace(/_/g, " ").replace(/;/g, ", ") : "";
+        const cats = [];
+        if (tags.amenity === "fast_food") cats.push("Fast Food");
+        if (tags.amenity === "cafe") cats.push("Cafe");
+        if (tags.amenity === "bar" || tags.amenity === "pub") cats.push("Bar");
+        if (cuisine) cats.push(...cuisine.split(",").map(c => c.trim()).filter(Boolean).slice(0, 2).map(c => c[0].toUpperCase() + c.slice(1)));
+        if (!cats.length) cats.push("Restaurant");
+        const address = addressFromTags(tags) || "See map";
+        results.push({
+          name, cat: cats, lat: rLat, lng: rLng, dist,
+          address,
+          phone: tags.phone || tags["contact:phone"] || "",
+          website: tags.website || tags["contact:website"] || "",
+          hours: tags.opening_hours || "",
+          cuisine, tags,
+          chain: !!(tags.brand || tags["brand:wikidata"]),
+          source: "osm",
+          osmType, locConfidence
+        });
+      }
+      return results;
+    }
+
+    // Guideline-based ranking for live data (no star ratings in OSM):
+    // closer is better, local/independent gets a bump (like the curated Family/Independent badge),
+    // places with verifiable info (hours, phone, website) rank higher than bare map pins.
+    function liveScore(r, radius) {
+      let s = 100 - (r.dist / Math.max(radius, 1)) * 60;
+      if (!r.chain) s += 8;
+      if (r.hours) s += 6;
+      if (r.phone) s += 4;
+      if (r.website) s += 4;
+      if (r.cuisine) s += 3;
+      return s;
+    }
+
+    function renderOsmResults(list, total) {
+      const container = document.getElementById("results");
+      const topNote = `<div class="top-note">Showing top ${list.length} of ${total} places within ${selectedRange} mi (live OpenStreetMap data)</div>`;
+      container.innerHTML = topNote + list.map((r, i) => {
+        const t = r.tags || {};
+        const esc = escHtml;
+        const own = r.source === "static" ? "" : (r.chain ? `<span class="badge corp">Chain${t.brand ? " · " + esc(t.brand) : ""}</span>` : `<span class="badge family">Local / Independent</span>`);
+        const take = /yes|only/.test(t.takeaway || "") || t.amenity === "fast_food" ? `<span class="badge">🥡 Takeout</span>` : "";
+        const deliv = t.delivery === "yes" ? `<span class="badge delivery">📦 Delivery</span>` : "";
+        const bar = t.amenity === "bar" || t.amenity === "pub" || t.bar === "yes" ? `<span class="badge alcohol">🍸 Bar</span>` : "";
+        const tv = t.sport ? `<span class="badge tv">📺 Sports</span>` : "";
+        const out = t.outdoor_seating === "yes" ? `<span class="badge">🌤 Outdoor seating</span>` : "";
+        const addr = enrichUsAddress(r.address || "");
+        const dir = directionsUrl(r.name, addr, r.lat, r.lng);
+        const web = r.website && /^https?:/i.test(r.website) ? r.website : (r.website ? "https://" + r.website : "");
+        return `
+        <div class="result-card" data-name="${esc(r.name)}" data-address="${esc(addr)}" data-lat="${r.lat}" data-lng="${r.lng}" data-dir="${esc(dir)}" data-confidence="${esc(r.locConfidence || "")}">
+          <div class="card-top">
+            <div class="rank">${i + 1}</div>
+            <div class="name-block">
+              <div class="name">${esc(r.name)}</div>
+              <div class="meta">${esc(r.cat.join(" · "))}</div>
+            </div>
+          </div>
+          <div class="badges">
+            <span class="badge">${r.dist.toFixed(1)} mi</span>
+            ${own}${take}${deliv}${bar}${tv}${out}${locBadge(r)}
+          </div>
+          ${r.hours ? `<div class="info-row">🕐 ${esc(r.hours)}</div>` : ""}
+          ${r.phone ? `<div class="info-row">📞 <a href="tel:${esc(r.phone.replace(/[^0-9+]/g,""))}">${esc(r.phone)}</a></div>` : ""}
+          <div class="info-row">📍 <a class="dir-link" href="${esc(dir)}" target="_blank" rel="noopener">${esc(addr || "See map")}</a></div>
+          ${web ? `<div class="info-row">🌐 <a href="${esc(web)}" target="_blank" rel="noopener">Website</a></div>` : ""}
+          ${kidsLine(r.name)}
+          <div class="notes">Live data from OpenStreetMap · star ratings &amp; sincerity scores not available for live places</div>
+          <button class="map-btn" onclick="showOnMap(${r.lat}, ${r.lng}, '${jsStr(r.name)}', '${jsStr(addr)}')">📍 Show on map</button>
+        </div>`;
+      }).join("");
+      refreshMap(list);
+    }
+
+    // ——— Live map markers (always built from the current result list) ———
+    let lastMapList = [];
+
+    function initMap(lat, lng) {
+      if (map) return;
+      const origin = userPos || (lat != null && lng != null ? { lat, lng } : null);
+      if (!origin) return;
+      map = L.map("map", { zoomControl: true, attributionControl: true })
+        .setView([origin.lat, origin.lng], 12);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(map);
+
+      markersLayer = L.layerGroup().addTo(map);
+    }
+
+    function refreshMap(list) {
+      lastMapList = list || [];
+      const wrap = document.getElementById("mapWrap");
+      const caption = document.getElementById("mapCaption");
+      if (!lastMapList.length) {
+        wrap.classList.remove("visible");
+        return;
+      }
+      const origin = userPos || lastMapList[0];
+      wrap.classList.add("visible");
+      initMap(origin.lat, origin.lng);
+      if (!map || !markersLayer) return;
+
+      markersLayer.clearLayers();
+      if (userMarker) {
+        map.removeLayer(userMarker);
+        userMarker = null;
+      }
+      const bounds = [];
+      if (userPos) {
+        userMarker = L.circleMarker([userPos.lat, userPos.lng], {
+          radius: 9,
+          fillColor: "#2563eb",
+          color: "#fff",
+          weight: 2,
+          fillOpacity: 0.95
+        }).addTo(map);
+        userMarker.bindPopup("<strong>Your location</strong><br>(or the ZIP you entered)");
+        bounds.push([userPos.lat, userPos.lng]);
+      }
+
+      lastMapList.forEach((r, i) => {
+        if (r.lat == null || r.lng == null) return;
+        const icon = L.divIcon({
+          className: "",
+          html: `<div class="marker-rank">${i + 1}</div>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13]
+        });
+        const m = L.marker([r.lat, r.lng], { icon }).addTo(markersLayer);
+        const addr = enrichUsAddress(r.address || "");
+        const dir = directionsUrl(r.name, addr, r.lat, r.lng);
+        const approx = (r.locConfidence && r.locConfidence !== "high")
+          ? `<div style="margin-top:4px;color:#666;font-size:0.8em;">Approximate location — directions use the street address</div>`
+          : "";
+        m.bindPopup(
+          `<strong>${escHtml(r.name)}</strong><br>${escHtml(addr || "Address not listed")}${approx}<br>` +
+          `<a href="${escHtml(dir)}" target="_blank" rel="noopener">Directions</a>`,
+          { autoPan: true, autoPanPadding: [56, 40], maxWidth: 240 }
+        );
+        m._foodieName = r.name;
+        m._foodieAddr = addr;
+        bounds.push([r.lat, r.lng]);
+      });
+
+      if (bounds.length) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+      setTimeout(() => { map.invalidateSize(); }, 80);
+      caption.textContent = "Pins match the list below · tap a pin for name, address, and directions";
+    }
+
+    // Show / focus the map on one restaurant from the current results
+    function showOnMap(lat, lng, name, address) {
+      const wrap = document.getElementById("mapWrap");
+      if (!lastMapList.length) {
+        refreshMap([{ name: name, address: address || "", lat: lat, lng: lng }]);
+      } else if (!map) {
+        refreshMap(lastMapList);
+      } else {
+        wrap.classList.add("visible");
+        setTimeout(() => { map.invalidateSize(); }, 80);
+      }
+      wrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      if (markersLayer) {
+        markersLayer.eachLayer(function (m) {
+          if (m._foodieName === name) m.openPopup();
+        });
+      }
+      const caption = document.getElementById("mapCaption");
+      caption.textContent = (name || "") + (address ? " · " + address : "") + " · blue = your location";
+    }
+
+    function renderResults(list, totalInRange) {
+      const container = document.getElementById("results");
+      if (!list.length) {
+        document.getElementById("mapWrap").classList.remove("visible");
+        container.innerHTML = `<div class="empty">No places found in that category within ${selectedRange} miles.<br>Try a larger radius or different category.</div>`;
+        return;
+      }
+
+      const topNote = `<div class="top-note">Showing top ${list.length} of ${totalInRange} spots within ${selectedRange} mi</div>`;
+
+      container.innerHTML = topNote + list.map((r, i) => {
+        const ownershipClass = r.ownership === "Family" || r.ownership === "Independent" ? "family" : "corp";
+        const ownershipLabel = r.ownership === "Family" ? "Family-owned" :
+                               r.ownership === "Independent" ? "Independent" : "Corporate";
+
+        const formatBadge = `<span class="badge format">${r.format || "Restaurant"}</span>`;
+
+        let deliveryBadge = "";
+        if (r.delivery && r.delivery.length) {
+          deliveryBadge = `<span class="badge delivery">📦 ${r.delivery.join(" · ")}</span>`;
+        } else {
+          deliveryBadge = `<span class="badge">No major delivery apps listed</span>`;
+        }
+
+        let alcoholBadge = "";
+        if (r.alcohol === "Full bar") {
+          alcoholBadge = `<span class="badge alcohol">🍸 Full bar</span>`;
+        } else if (r.alcohol === "Beer & wine") {
+          alcoholBadge = `<span class="badge alcohol">🍺 Beer & wine</span>`;
+        }
+
+        const tvBadge = r.sportsTV ? `<span class="badge tv">📺 Sports TVs</span>` : "";
+
+        return `
+          <div class="result-card" data-name="${escHtml(r.name)}" data-address="${escHtml(enrichUsAddress(r.address || ""))}" data-lat="${r.lat}" data-lng="${r.lng}" data-dir="${escHtml(directionsUrl(r.name, enrichUsAddress(r.address), r.lat, r.lng))}" data-confidence="${escHtml(r.locConfidence || "")}">
+            <div class="card-top">
+              <div class="rank">${i + 1}</div>
+              <div class="name-block">
+                <div class="name">${r.name}</div>
+                <div class="meta">${r.cat.join(" · ")}</div>
+              </div>
+            </div>
+            <div class="rating-line">
+              <span class="stars">${r.rating.toFixed(1)} ★</span>
+              &nbsp;·&nbsp;
+              <span class="badge sincerity">🛡 ${r.sincerity}% sincere</span>
+            </div>
+            <div class="badges">
+              ${formatBadge}
+              <span class="badge ${ownershipClass}">${ownershipLabel}</span>
+              <span class="badge">~$${r.cost}/person</span>
+              <span class="badge">${r.dist.toFixed(1)} mi</span>
+              ${deliveryBadge}
+              ${alcoholBadge}
+              ${tvBadge}
+              ${locBadge(r)}
+            </div>
+            <div class="info-row">🕐 ${r.hours}</div>
+            <div class="info-row">⏱ Avg wait: ${r.wait || "Varies"}</div>
+            <div class="info-row">🔥 #1 ordered: <strong>${r.topDish || "Ask staff"}</strong></div>
+            <div class="info-row">🎉 Specials: ${r.specials || "None listed"}</div>
+            <div class="info-row">📞 ${r.phone && r.phone !== "See listing" ? `<a href="tel:${r.phone.replace(/[^0-9+]/g,"")}">${r.phone}</a>` : (r.phone || "See listing")}</div>
+            <div class="info-row">📍 <a class="dir-link" href="${directionsUrl(r.name, enrichUsAddress(r.address), r.lat, r.lng)}" target="_blank" rel="noopener">${r.address}</a></div>
+            ${r.website ? `<div class="info-row">🌐 <a href="${r.website}" target="_blank" rel="noopener">Restaurant website</a></div>` : ""}
+            <div class="info-row">Opened: ${r.opened}</div>
+            <div class="busy-bar" title="Relative busyness">
+              <div class="busy-fill" style="width:${r.busy}%"></div>
+            </div>
+            ${kidsLine(r.name)}
+            <div class="notes">${r.notes}</div>
+            <button class="map-btn" onclick="showOnMap(${r.lat}, ${r.lng}, '${String(r.name).replace(/'/g, "\\'")}')">📍 Show on map</button>
+          </div>
+        `;
+      }).join("");
+      refreshMap(list);
+    }
+
+    // ——— Chips ———
+    document.getElementById("chips").addEventListener("click", (e) => {
+      if (!e.target.classList.contains("chip")) return;
+      document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+      e.target.classList.add("active");
+      selectedCat = e.target.dataset.cat;
+    });
+
+    function toggleHow() {
+      const body = document.getElementById("howBody");
+      const arrow = document.getElementById("howArrow");
+      body.classList.toggle("open");
+      arrow.textContent = body.classList.contains("open") ? "▲" : "▼";
+    }
+
+
+    // ——— Menu & Views ———
+    function toggleMenu() {
+      document.getElementById("menuOverlay").classList.toggle("open");
+    }
+
+    function showView(name) {
+      document.querySelectorAll(".view-section").forEach(v => v.classList.remove("active"));
+      const el = document.getElementById("view-" + name);
+      if (el) el.classList.add("active");
+      document.getElementById("mapWrap").classList.remove("visible");
+      if (name === "specials") renderSpecials();
+      if (name === "gas") {
+        // keep previous gas results or empty
+      }
+    }
+
+    // ——— ZIP code search (any US ZIP: zippopotam.us, Nominatim fallback) ———
+    async function geocodeZip(zip) {
+      try {
+        const r = await fetch("https://api.zippopotam.us/us/" + zip);
+        if (r.ok) {
+          const d = await r.json();
+          const pl = d.places && d.places[0];
+          if (pl) return { lat: parseFloat(pl.latitude), lng: parseFloat(pl.longitude), label: `${pl["place name"]}, ${pl["state abbreviation"]}` };
+        }
+      } catch (e) { console.warn("zippopotam failed", e.message || e); }
+      const url = "https://nominatim.openstreetmap.org/search?postalcode=" + encodeURIComponent(zip) + "&country=US&format=json&limit=1";
+      const res = await fetch(url, { headers: { "Accept": "application/json" } });
+      const data = await res.json();
+      if (data && data.length) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), label: (data[0].display_name || "").split(",").slice(0, 3).join(",") };
+      return null;
+    }
+
+    async function searchByZip() {
+      const zip = (document.getElementById("zipInput").value || "").trim();
+      if (!/^\d{5}$/.test(zip)) {
+        setLocUI("Invalid ZIP", "Enter a 5-digit US ZIP code");
+        return;
+      }
+      setLocUI("Looking up ZIP…", zip + " · please wait");
+      try {
+        const g = await geocodeZip(zip);
+        if (g && !isNaN(g.lat)) {
+          clearTimers();
+          locSeq++;
+          userPos = { lat: g.lat, lng: g.lng };
+          setLocUI("ZIP " + zip, g.label);
+          showView("foodie");
+          scourAndRank();
+        } else {
+          setLocUI("ZIP not found", "Try another ZIP or use device location");
+        }
+      } catch (e) {
+        setLocUI("Lookup failed", "Network issue – try again or use location button");
+      }
+    }
+    document.getElementById("zipInput").addEventListener("keydown", e => { if (e.key === "Enter") searchByZip(); });
+
+    // ——— Gas ranking ———
+    document.getElementById("fuelChips")?.addEventListener("click", (e) => {
+      if (!e.target.classList.contains("fuel-chip")) return;
+      document.querySelectorAll(".fuel-chip").forEach(c => c.classList.remove("active"));
+      e.target.classList.add("active");
+      selectedFuel = e.target.dataset.fuel;
+    });
+
+    function rankGas() {
+      if (!userPos || milesBetween(userPos.lat, userPos.lng, FALLBACK.lat, FALLBACK.lng) > 25) {
+        document.getElementById("gasResults").innerHTML = '<div class="empty">Gas prices are only available for the Brandon / Valrico, FL area right now.<br>Your location is outside that area (or not set). For live prices try GasBuddy.com.</div>';
+        return;
+      }
+      const origin = userPos || FALLBACK;
+      const key = selectedFuel; // regular | mid | premium | diesel
+      let list = gasStations
+        .map(s => {
+          const price = s[key];
+          const dist = milesBetween(origin.lat, origin.lng, s.lat, s.lng);
+          return { ...s, price, dist };
+        })
+        .filter(s => s.price != null);
+
+      // Sort by price then distance
+      list.sort((a, b) => (a.price - b.price) || (a.dist - b.dist));
+      const top = list.slice(0, 6);
+
+      const container = document.getElementById("gasResults");
+      if (!top.length) {
+        container.innerHTML = '<div class="empty">No stations with that fuel type in the local list.</div>';
+        return;
+      }
+
+      container.innerHTML = top.map((s, i) => `
+        <div class="result-card">
+          <div class="card-top">
+            <div class="rank">${i + 1}</div>
+            <div class="name-block">
+              <div class="name">${s.name}</div>
+              <div class="meta">${s.address}</div>
+            </div>
+          </div>
+          <div class="rating-line">
+            <span class="stars">$${s.price.toFixed(2)}</span> / gal · ${selectedFuel}
+            &nbsp;·&nbsp; ${s.dist.toFixed(1)} mi
+          </div>
+          ${s.note ? `<div class="notes">${s.note}</div>` : ""}
+          <button class="map-btn" onclick="showOnMap(${s.lat}, ${s.lng}, '${s.name.replace(/'/g, "\\'")}')">📍 Show on map</button>
+        </div>
+      `).join("");
+    }
+
+    // ——— Today's Specials ———
+    const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    function renderSpecials() {
+      const dayIdx = new Date().getDay();
+      const dayName = dayNames[dayIdx];
+      document.getElementById("specialsDayNote").innerHTML = `<span class="day-badge">${dayName}</span> Specials from nearby spots`;
+
+      // Simple keyword / existing specials matching
+      const dayKeywords = {
+        0: ["sunday", "brunch", "sun"],
+        1: ["monday", "mon"],
+        2: ["tuesday", "taco", "tue"],
+        3: ["wednesday", "wing", "wed"],
+        4: ["thursday", "thu"],
+        5: ["friday", "fri", "happy hour"],
+        6: ["saturday", "sat", "brunch"]
+      };
+      const keys = dayKeywords[dayIdx] || [];
+      if (!userPos || milesBetween(userPos.lat, userPos.lng, FALLBACK.lat, FALLBACK.lng) > 25) {
+        document.getElementById("specialsResults").innerHTML = '<div class="empty">Today’s Specials are only available for the Brandon / Valrico, FL area right now.<br>Tip: on the main page, use the 👶 filter to see kids-eat-free deals near you today.</div>';
+        return;
+      }
+
+      const origin = userPos || FALLBACK;
+      let hits = restaurants
+        .map(r => {
+          const dist = milesBetween(origin.lat, origin.lng, r.lat, r.lng);
+          const text = ((r.specials || "") + " " + (r.notes || "")).toLowerCase();
+          const match = keys.some(k => text.includes(k)) || (r.specials && r.specials.length > 5);
+          return { ...r, dist, match };
+        })
+        .filter(r => r.match && r.dist <= 15)
+        .sort((a, b) => a.dist - b.dist)
+        .slice(0, 8);
+
+      const container = document.getElementById("specialsResults");
+      if (!hits.length) {
+        container.innerHTML = `<div class="empty">No day-specific specials found in the local list for ${dayName}.<br>Many places still list general specials on their cards after you Scour.</div>`;
+        return;
+      }
+
+      container.innerHTML = hits.map((r, i) => `
+        <div class="result-card">
+          <div class="card-top">
+            <div class="rank">${i + 1}</div>
+            <div class="name-block">
+              <div class="name">${r.name}</div>
+              <div class="meta">${r.cat.join(" · ")} · ${r.dist.toFixed(1)} mi</div>
+            </div>
+          </div>
+          <div class="info-row">🎉 <strong>${r.specials || "See restaurant"}</strong></div>
+          <div class="notes">${r.notes || ""}</div>
+          <button class="map-btn" onclick="showOnMap(${r.lat}, ${r.lng}, '${String(r.name).replace(/'/g, "\\'")}')">📍 Show on map</button>
+        </div>
+      `).join("");
+    }
+
+
+    // ——— Start ———
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("./sw.js").catch(function () {});
+      });
+    }
+    requestLocation(false);
+  </script>
+</body>
+</html>
