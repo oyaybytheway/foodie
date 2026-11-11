@@ -508,6 +508,7 @@
     <div class="menu-panel">
       <div class="menu-title">Menu</div>
       <button class="menu-item" onclick="showView('foodie'); toggleMenu()">🍽 Restaurant Rankings</button>
+      <button class="menu-item" onclick="showTalkOfTheTown(); toggleMenu()">⭐ Talk of the Town</button>
       <button class="menu-item" onclick="showView('gas'); toggleMenu()">⛽ Gas Prices</button>
       <button class="menu-item" onclick="showView('specials'); toggleMenu()">🎉 Today’s Specials</button>
       <button class="menu-item" onclick="showView('foodie'); toggleMenu(); document.getElementById('zipInput').focus()">📍 Enter ZIP Code</button>
@@ -556,6 +557,7 @@
 
   <div class="chips" id="chips">
     <button class="chip active" data-cat="all">All</button>
+    <button class="chip" data-cat="talk">Talk of the Town</button>
     <button class="chip" data-cat="BBQ">BBQ</button>
     <button class="chip" data-cat="Steakhouse">Steakhouse</button>
     <button class="chip" data-cat="Seafood">Seafood</button>
@@ -626,6 +628,7 @@ Each card has a <strong>Show on map</strong> button.<br><br>
       <p>Signals we look at: length & substance, personal experience markers, superlative density, generic phrases, rating–tone match, and reviewer history.</p>
       <p>Places with higher average sincerity scores get boosted in the ranking. This helps surface spots locals actually love instead of review-farmed places.</p>
       <p>Ranking always uses your current location (or the ZIP you entered) + the radius you select (2 / 5 / 10 / 20 miles). Only places inside that radius are ranked; the top 5 are shown.</p>
+      <p><strong>Talk of the Town</strong> is a separate top-10 list ranked by verified public star ratings and review counts (Bayesian-weighted, so a 5-star place with only a few reviews does not automatically beat a well-reviewed 4.7). In Brandon / Valrico these scores were last checked November 10, 2026. We never invent ratings — outside that area the tab says coming soon until a live review API is connected.</p>
       <p>Want the location? Tap the blue <strong>Show on map</strong> button on any result card. The map appears with that spot + your location. Map is hidden by default so the rankings stay front and center.</p>
       <p style="margin-top:12px;font-size:0.8rem;color:#888;">Nationwide live data from OpenStreetMap around your location or ZIP; extra-detailed curated list for Brandon / Valrico, FL. Only currently operating restaurants. Data refreshed August 10, 2026. Map powered by OpenStreetMap + Leaflet.</p>
     </div>
@@ -653,7 +656,7 @@ Each card has a <strong>Show on map</strong> button.<br><br>
     // format: "Sit-down", "Counter service", "Takeout-focused", "Fast casual", "Food truck"
     const restaurants = [
       // BBQ
-      { id: 1, name: "Mission BBQ", cat: ["BBQ", "American", "Takeout"], rating: 4.4, sincerity: 87, ownership: "Corporate", format: "Counter service", hours: "Mon–Sat 11–9, Sun 11:30–8", phone: "(813) 830-9618", address: "1504 W Brandon Blvd, Brandon", cost: 16, opened: "2018", busy: 65, delivery: ["DoorDash", "Uber Eats"], alcohol: "None", sportsTV: false, wait: "8–15 min", specials: "Occasional holiday specials", topDish: "Sliced Brisket plate ($15–19)", notes: "Consistently praised for brisket and patriotic vibe. Free soft drinks with meal.", website: "https://mission-bbq.com/locations-and-menu/brandon-fl/", lat: 27.937678, lng: -82.306411 },
+      { id: 1, name: "Mission BBQ", cat: ["BBQ", "American", "Takeout"], rating: 4.6, sincerity: 87, ownership: "Corporate", format: "Counter service", hours: "Mon–Sat 11–9, Sun 11:30–8", phone: "(813) 830-9618", address: "1504 W Brandon Blvd, Brandon", cost: 16, opened: "2018", busy: 65, delivery: ["DoorDash", "Uber Eats"], alcohol: "None", sportsTV: false, wait: "8–15 min", specials: "Occasional holiday specials", topDish: "Sliced Brisket plate ($15–19)", notes: "Consistently praised for brisket and patriotic vibe. Free soft drinks with meal.", website: "https://mission-bbq.com/locations-and-menu/brandon-fl/", lat: 27.937678, lng: -82.306411 },
       { id: 2, name: "BubbaQue's BBQ", cat: ["BBQ", "American", "Takeout"], rating: 4.3, sincerity: 84, ownership: "Corporate", format: "Sit-down", hours: "Sun–Thu 11–9:30, Fri–Sat 11–10:30", phone: "(813) 685-1800", address: "957 E Brandon Blvd #5500, Brandon", cost: 15, opened: "2010s", busy: 58, delivery: ["DoorDash", "Uber Eats"], alcohol: "Beer & wine", sportsTV: false, wait: "10–20 min", specials: "Combo dinners & redneck nachos", topDish: "Brisket or pulled pork plate ($13–18)", notes: "Solid local BBQ chain. Casual, family-friendly.", website: "https://bubbaquesbbq.com/brandon/", lat: 27.937639, lng: -82.269158 },
       { id: 3, name: "Kojak's House of Ribs", cat: ["BBQ", "American"], rating: 4.3, sincerity: 85, ownership: "Family", format: "Sit-down", hours: "Tue–Fri 11–8, Sat–Sun 12–8 (closed Mon)", phone: "(813) 324-8371", address: "1809 S Parsons Ave, Seffner", cost: 18, opened: "1978 (Seffner 2022)", busy: 55, delivery: ["DoorDash"], alcohol: "Beer & wine", sportsTV: false, wait: "12–25 min", specials: "Rib dinners & homemade sides", topDish: "Rib Dinner or spare ribs", notes: "Family-owned since 1978. Moved from South Tampa to Seffner. Slow-smoked ribs and classic sides.", website: "https://kojaksbbq.net", lat: 27.980715, lng: -82.286012 },
 
@@ -670,7 +673,7 @@ Each card has a <strong>Show on map</strong> button.<br><br>
       { id: 11, name: "Bonefish Grill", cat: ["Seafood", "American"], rating: 4.3, sincerity: 80, ownership: "Corporate", format: "Sit-down", hours: "Mon–Thu 11–10, Fri–Sat 11–11, Sun 11–9", phone: "(813) 571-5553", address: "1015 Providence Rd, Brandon", cost: 30, opened: "2000s", busy: 65, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "15–25 min", specials: "Happy hour; Bang Bang Shrimp", topDish: "Bang Bang Shrimp + wood-grilled fish", notes: "Wood-grilled fish and seafood specialties. Upscale-casual.", website: "https://locations.bonefishgrill.com/florida/brandon/1015-providence-road", lat: 27.922817, lng: -82.318417 },
 
       // Sushi / Asian
-      { id: 12, name: "Sushi Ushi", cat: ["Sushi", "Asian"], rating: 4.7, sincerity: 91, ownership: "Independent", format: "Sit-down", hours: "Tue–Thu 11:30–3 & 4:30–9:30, Fri–Sat until 10:30, Sun 1–9:30 (closed Mon)", phone: "(813) 662-0728", address: "1713 E State Rd 60, Valrico", cost: 22, opened: "2012", busy: 72, delivery: ["Uber Eats", "DoorDash", "Grubhub"], alcohol: "Beer & wine", sportsTV: false, wait: "15–25 min", specials: "Lunch specials Tue–Fri", topDish: "Specialty rolls / Chirashi", notes: "High sincerity. Fresh fish and generous rolls. Quiet dining room.", website: "https://www.sushiushivalrico.com", lat: 27.937910, lng: -82.234337 },
+      { id: 12, name: "Sushi Ushi", cat: ["Sushi", "Asian"], rating: 4.8, sincerity: 91, ownership: "Independent", format: "Sit-down", hours: "Tue–Thu 11:30–3 & 4:30–9:30, Fri–Sat until 10:30, Sun 1–9:30 (closed Mon)", phone: "(813) 662-0728", address: "1713 E State Rd 60, Valrico", cost: 22, opened: "2012", busy: 72, delivery: ["Uber Eats", "DoorDash", "Grubhub"], alcohol: "Beer & wine", sportsTV: false, wait: "15–25 min", specials: "Lunch specials Tue–Fri", topDish: "Specialty rolls / Chirashi", notes: "High sincerity. Fresh fish and generous rolls. Quiet dining room.", website: "https://www.sushiushivalrico.com", lat: 27.937910, lng: -82.234337 },
       { id: 13, name: "Kanji Sushi & Ramen", cat: ["Sushi", "Asian"], rating: 4.8, sincerity: 90, ownership: "Independent", format: "Sit-down", hours: "Mon–Thu 11–3 & 5–10, Fri 11–3 & 5–11, Sat 11–11, Sun 12–10", phone: "(813) 315-8065", address: "910 Providence Rd, Brandon", cost: 24, opened: "2020s", busy: 68, delivery: ["DoorDash", "Uber Eats"], alcohol: "Beer & wine", sportsTV: false, wait: "15–30 min", specials: "Lunch specials (rolls or ramen sets)", topDish: "Tonkotsu Ramen or signature rolls", notes: "Strong recent reviews. Ramen and creative rolls praised. Modern interior. Next door to Liang's.", website: "https://www.kanjirestaurant.com", lat: 27.928360, lng: -82.312417 },
       { id: 14, name: "Liang's Bistro", cat: ["Asian", "Chinese", "Thai"], rating: 4.8, sincerity: 92, ownership: "Family", format: "Sit-down", hours: "Daily 11–9:45 (Sun until 9:30)", phone: "(813) 653-1111", address: "812 Providence Rd, Brandon", cost: 18, opened: "2010s", busy: 55, delivery: ["Uber Eats", "DoorDash"], alcohol: "Beer & wine", sportsTV: false, wait: "10–20 min", specials: "Lunch specials Mon–Fri", topDish: "General Tso’s, Pad Thai, wok dishes", notes: "High sincerity. Fresh made-to-order Asian in a nicer sit-down setting.", website: "https://www.liangsbistro.com", lat: 27.925703, lng: -82.315444 },
       { id: 15, name: "Pho Viet", cat: ["Vietnamese", "Asian"], rating: 4.3, sincerity: 86, ownership: "Independent", format: "Sit-down", hours: "Mon–Thu 11–9:30, Fri–Sat 11–10, Sun 11–9", phone: "(813) 643-8888", address: "1202 W Brandon Blvd, Brandon", cost: 15, opened: "2010s", busy: 68, delivery: ["DoorDash", "Uber Eats"], alcohol: "Beer & wine", sportsTV: false, wait: "10–20 min", specials: "Large pho bowls; Northern & Southern styles", topDish: "Pho Dac Biet or Have It Your Way Pho", notes: "Main Brandon Vietnamese spot. Authentic pho, big portions, consistent local favorite.", website: "https://phovietbrandonfl.com", lat: 27.937857, lng: -82.300836 },
@@ -679,36 +682,37 @@ Each card has a <strong>Show on map</strong> button.<br><br>
       { id: 18, name: "Tandoor Indian Cuisine", cat: ["Indian", "Asian"], rating: 4.5, sincerity: 85, ownership: "Independent", format: "Sit-down", hours: "Sun–Thu 11–2 & 4–9, Fri–Sat 11–2 & 4–9:30", phone: "(813) 654-7300", address: "805 E Brandon Blvd, Brandon", cost: 18, opened: "2000s", busy: 50, delivery: ["Uber Eats", "DoorDash", "Grubhub"], alcohol: "Beer & wine", sportsTV: false, wait: "10–20 min", specials: "Lunch specials; thali", topDish: "Butter Chicken", notes: "Butter chicken and lunch specials popular. Good vegetarian options. Local favorite for 17+ years.", website: "https://tandoorbrandon.com/", lat: 27.937182, lng: -82.273092 },
 
       // Mexican / Latin
-      { id: 19, name: "Taqueria la Cañada", cat: ["Mexican", "Latin", "Takeout"], rating: 4.7, sincerity: 93, ownership: "Family", format: "Counter service", hours: "Mon–Fri 10–9, Sat 9–9, Sun 9–8", phone: "(813) 438-8756", address: "1500 N Parsons Ave, Brandon", cost: 11, opened: "2010s", busy: 80, delivery: ["Uber Eats", "DoorDash"], alcohol: "None", sportsTV: false, wait: "5–12 min", specials: "Wednesday taco specials; al pastor / birria", topDish: "Al Pastor or Birria tacos", notes: "Highest sincerity Mexican. Street-style tacos, fresh tortillas, authentic.", website: "https://taquerialacanadafl.com", lat: 27.963657, lng: -82.286402 },
+      { id: 19, name: "Taqueria la Cañada", cat: ["Mexican", "Latin", "Takeout"], rating: 4.8, sincerity: 93, ownership: "Family", format: "Counter service", hours: "Mon–Fri 10–9, Sat 9–9, Sun 9–8", phone: "(813) 438-8756", address: "1500 N Parsons Ave, Brandon", cost: 11, opened: "2010s", busy: 80, delivery: ["Uber Eats", "DoorDash"], alcohol: "None", sportsTV: false, wait: "5–12 min", specials: "Wednesday taco specials; al pastor / birria", topDish: "Al Pastor or Birria tacos", notes: "Highest sincerity Mexican. Street-style tacos, fresh tortillas, authentic.", website: "https://taquerialacanadafl.com", lat: 27.963657, lng: -82.286402 },
       { id: 20, name: "Sabor a Mexico", cat: ["Mexican", "Latin"], rating: 4.3, sincerity: 83, ownership: "Independent", format: "Sit-down", hours: "Daily 10–10", phone: "See listing", address: " 706 E Brandon Blvd, Brandon", cost: 14, opened: "2010s", busy: 70, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "10–20 min", specials: "Happy hour; margarita specials", topDish: "Street tacos or Mole", notes: "Big menu, solid tacos and mole. Popular with families.", lat: 27.937624, lng: -82.274947 },
       { id: 21, name: "La Terraza Colombian", cat: ["Latin"], rating: 4.4, sincerity: 86, ownership: "Family", format: "Sit-down", hours: "See listing", phone: "See listing", address: "SR-60 corridor", cost: 20, opened: "2010s", busy: 55, delivery: ["DoorDash"], alcohol: "Beer & wine", sportsTV: false, wait: "12–20 min", specials: "Weekend bandeja specials", topDish: "Bandeja Paisa", notes: "Bandeja paisa and arepas get the love. Hearty portions.", lat: 27.9380, lng: -82.2700 },
       { id: 22, name: "Los Chapos Tacos", cat: ["Mexican", "Latin", "Takeout"], rating: 4.4, sincerity: 88, ownership: "Independent", format: "Counter service", hours: "See current hours (usually lunch–evening)", phone: "(727) 247-3636", address: "226 Oakfield Dr, Brandon", cost: 12, opened: "2010s", busy: 65, delivery: ["DoorDash", "Uber Eats"], alcohol: "None", sportsTV: false, wait: "8–15 min", specials: "Daily taco specials", topDish: "Carne asada or al pastor tacos", notes: "Authentic street-style tacos. Locals hunt this spot for real flavor.", website: "https://loschapostacos.com/locations", lat: 27.934259, lng: -82.287389 },
 
       // Italian / Pizza
-      { id: 23, name: "Allegria Italiana", cat: ["Italian"], rating: 4.6, sincerity: 90, ownership: "Family", format: "Sit-down", hours: "Tue–Sun 4–9", phone: "(813) 689-0000", address: "518 Oakfield Dr, Brandon", cost: 28, opened: "2010s", busy: 60, delivery: [], alcohol: "Beer & wine", sportsTV: false, wait: "15–25 min", specials: "Tue–Thu pasta specials", topDish: "Lasagna or handmade pasta", notes: "Handmade pasta and lasagna get frequent sincere praise. Quiet, good for date night.", lat: 27.933864, lng: -82.291808 },
+      { id: 23, name: "Allegria Italiana", cat: ["Italian"], rating: 4.5, sincerity: 90, ownership: "Family", format: "Sit-down", hours: "Tue–Sun 4–9", phone: "(813) 689-0000", address: "518 Oakfield Dr, Brandon", cost: 28, opened: "2010s", busy: 60, delivery: [], alcohol: "Beer & wine", sportsTV: false, wait: "15–25 min", specials: "Tue–Thu pasta specials", topDish: "Lasagna or handmade pasta", notes: "Handmade pasta and lasagna get frequent sincere praise. Quiet, good for date night.", lat: 27.933864, lng: -82.291808 },
       { id: 24, name: "Carrabba's Italian Grill", cat: ["Italian", "Pizza"], rating: 4.2, sincerity: 78, ownership: "Corporate", format: "Sit-down", hours: "Mon–Thu 11–10, Fri–Sat 11–11, Sun 11–10", phone: "(813) 657-8166", address: "801 Providence Rd, Brandon", cost: 24, opened: "1990s", busy: 70, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "12–22 min", specials: "Happy hour; pasta specials", topDish: "Chicken Bryan", notes: "Reliable Italian chain. Full bar, family-friendly.", website: "https://locations.carrabbas.com/florida/brandon/801-providence-road", lat: 27.925311, lng: -82.314939 },
       { id: 25, name: "Josephine's Italian Market", cat: ["Italian", "Takeout"], rating: 4.9, sincerity: 94, ownership: "Family", format: "Counter service", hours: "Mon–Sat 9–9, Sun 10–3", phone: "(813) 683-0209", address: "730 W Brandon Blvd, Brandon", cost: 15, opened: "2024", busy: 50, delivery: [], alcohol: "Beer & wine", sportsTV: false, wait: "5–15 min", specials: "Italian sandwiches, pizza, gelato", topDish: "Italian sub or Roman pizza", notes: "Authentic Italian market & deli. High-quality imported products and excellent sandwiches.", website: "https://josephinesitalianmarket.com", lat: 27.937816, lng: -82.294400 },
 
       // Cajun / American / Burgers / Sports
       { id: 26, name: "Tibby's New Orleans Kitchen", cat: ["Cajun", "American"], rating: 4.5, sincerity: 88, ownership: "Family", format: "Sit-down", hours: "Mon–Thu 11–9, Fri–Sat 11–10, Sun 10–9", phone: "(813) 315-8443", address: "1721 W Brandon Blvd, Brandon", cost: 26, opened: "2008", busy: 78, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "15–30 min", specials: "Happy hour; Sunday brunch with live music", topDish: "Gumbo or Po'boy", notes: "Family-owned by New Orleans natives. Gumbo and po'boys get raves.", lat: 27.937669, lng: -82.310775 },
-      { id: 27, name: "The Stein & Vine", cat: ["American", "Burgers", "Sports Bar"], rating: 4.6, sincerity: 89, ownership: "Independent", format: "Sit-down", hours: "Sun–Tue 12–9, Wed–Thu 12–10, Fri–Sat 12–11", phone: "(813) 655-4786", address: "827 W Bloomingdale Ave, Brandon", cost: 18, opened: "2012", busy: 75, delivery: ["DoorDash"], alcohol: "Full bar", sportsTV: true, wait: "10–25 min", specials: "Daily chef specials; craft beer & wine", topDish: "Burgers or seasonal specials", notes: "Neighborhood favorite for creative American food and craft beer. High sincerity.", lat: 27.892789, lng: -82.295212 },
+      { id: 27, name: "The Stein & Vine", cat: ["American", "Burgers", "Sports Bar"], rating: 4.7, sincerity: 89, ownership: "Independent", format: "Sit-down", hours: "Sun–Tue 12–9, Wed–Thu 12–10, Fri–Sat 12–11", phone: "(813) 655-4786", address: "827 W Bloomingdale Ave, Brandon", cost: 18, opened: "2012", busy: 75, delivery: ["DoorDash"], alcohol: "Full bar", sportsTV: true, wait: "10–25 min", specials: "Daily chef specials; craft beer & wine", topDish: "Burgers or seasonal specials", notes: "Neighborhood favorite for creative American food and craft beer. High sincerity.", lat: 27.892789, lng: -82.295212 },
       { id: 28, name: "The Landing Bar & Grill", cat: ["American", "Seafood", "Sports Bar", "Burgers"], rating: 4.2, sincerity: 80, ownership: "Independent", format: "Sit-down", hours: "Mon–Tue 3pm–12am, Wed–Sun 11am–12am", phone: "(813) 653-0002", address: "4351 Lynx Paw Trail, Valrico", cost: 18, opened: "2010s", busy: 75, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "10–20 min", specials: "Happy hour; wing specials on game days", topDish: "Wings, burgers, or pizza", notes: "Neighborhood bar & grill with Buffalo NY influence. Lots of TVs, outdoor patio.", website: "https://lovethelanding.com", lat: 27.920000, lng: -82.250000 },
       { id: 29, name: "Ford's Garage Brandon", cat: ["Burgers", "American", "Sports Bar"], rating: 4.1, sincerity: 76, ownership: "Corporate", format: "Sit-down", hours: "Sun–Thu 11–10, Fri–Sat 11–11", phone: "(813) 661-3673", address: "11105 Causeway Blvd, Brandon", cost: 18, opened: "2010s", busy: 80, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "15–30 min", specials: "Happy hour Mon–Fri 2–6; burger & beer specials", topDish: "Signature burgers", notes: "Car-themed burger joint. Big burgers, shakes, lots of TVs. Loud when busy.", website: "https://fordsgarageusa.com/locations/brandon/", lat: 27.922575, lng: -82.326351 },
 
       // Mediterranean / Breakfast
       { id: 30, name: "Petra Mediterranean", cat: ["Mediterranean", "American"], rating: 4.5, sincerity: 86, ownership: "Independent", format: "Sit-down", hours: "See listing", phone: "See listing", address: "Causeway Blvd area", cost: 20, opened: "2010s", busy: 58, delivery: ["DoorDash", "Uber Eats"], alcohol: "Beer & wine", sportsTV: false, wait: "10–18 min", specials: "Lunch platters Mon–Fri", topDish: "Mixed Grill platter", notes: "Mixed grill, falafel, and fresh salads. Healthy options with bold flavors.", lat: 27.9500, lng: -82.2900 },
-      { id: 31, name: "Jerusalem Grill", cat: ["Mediterranean", "Middle Eastern"], rating: 4.6, sincerity: 90, ownership: "Independent", format: "Counter service", hours: "See listing", phone: "See listing", address: "1150 E Bloomingdale Ave, Valrico", cost: 15, opened: "2010s", busy: 55, delivery: ["DoorDash"], alcohol: "None", sportsTV: false, wait: "8–15 min", specials: "Lunch platters", topDish: "Shawarma or mixed grill", notes: "High sincerity Middle Eastern. Fresh, generous portions, friendly staff.", lat: 27.894500, lng: -82.255500 },
+      { id: 31, name: "Jerusalem Grill", cat: ["Mediterranean", "Middle Eastern"], rating: 4.9, sincerity: 90, ownership: "Independent", format: "Counter service", hours: "Mon–Wed 11–8, Thu–Sat 11–9, Sun 11–7", phone: "(813) 324-8312", address: "1050 E Bloomingdale Ave, Valrico", cost: 15, opened: "2010s", busy: 55, delivery: ["DoorDash"], alcohol: "None", sportsTV: false, wait: "8–15 min", specials: "Lunch platters", topDish: "Shawarma or mixed grill", notes: "High sincerity Middle Eastern. Fresh, generous portions, friendly staff.", lat: 27.894500, lng: -82.255500 },
       { id: 32, name: "The Breakfast Company", cat: ["Breakfast", "American"], rating: 4.5, sincerity: 88, ownership: "Independent", format: "Sit-down", hours: "Daily 7–2", phone: "See listing", address: "Brandon / Valrico", cost: 14, opened: "2010s", busy: 85, delivery: [], alcohol: "None", sportsTV: false, wait: "15–35 min (weekends longer)", specials: "Daily breakfast specials", topDish: "Pancakes or omelet plates", notes: "Local favorite for pancakes, omelets, and biscuits. Arrive early on weekends.", lat: 27.9390, lng: -82.2750 },
       { id: 33, name: "Maple Street Biscuit Company", cat: ["Breakfast", "American"], rating: 4.4, sincerity: 85, ownership: "Corporate", format: "Counter service", hours: "Mon–Fri 7–2, Sat–Sun 7–3", phone: "(813) 409-3583", address: "127 W Bloomingdale Ave, Brandon", cost: 13, opened: "2010s", busy: 75, delivery: [], alcohol: "None", sportsTV: false, wait: "10–20 min", specials: "Biscuit sandwiches & gravy", topDish: "Signature biscuit sandwiches", notes: "Fast-casual biscuits with creative toppings. Popular morning stop.", website: "https://www.maplestreetbiscuits.com/", lat: 27.893541, lng: -82.289869 },
 
       // More coverage
       { id: 34, name: "Miller's Ale House - Brandon", cat: ["American", "Sports Bar", "Burgers"], rating: 4.0, sincerity: 77, ownership: "Corporate", format: "Sit-down", hours: "Sun–Thu 11–1am, Fri–Sat 11–2am", phone: "(813) 643-0511", address: "1817 W Brandon Blvd, Brandon", cost: 18, opened: "2000s", busy: 70, delivery: ["DoorDash", "Uber Eats"], alcohol: "Full bar", sportsTV: true, wait: "12–25 min", specials: "Happy hour; wing specials", topDish: "Wings or burgers", notes: "Sports-bar chain with big TV walls. Reliable for groups watching games.", website: "https://millersalehouse.com/locations/brandon/", lat: 27.937661, lng: -82.312667 },
-      { id: 35, name: "Himes Breakfast House", cat: ["Breakfast", "American"], rating: 4.5, sincerity: 89, ownership: "Independent", format: "Sit-down", hours: "Tue–Sun 7–2 (closed Mon)", phone: "(813) 692-6637", address: "312 E Brandon Blvd, Brandon", cost: 15, opened: "2021", busy: 80, delivery: ["DoorDash", "Uber Eats"], alcohol: "None", sportsTV: false, wait: "15–30 min (weekends longer)", specials: "Chef-inspired southern breakfast & brunch", topDish: "Jesse Bowl or Cali Benny", notes: "Newer local favorite for southern-style breakfast and brunch. Friendly service and solid portions.", website: "https://www.himesbreakfasthouse.com/himes-location-brandon-fl", lat: 27.937787, lng: -82.283251 },
+      { id: 35, name: "Himes Breakfast House", cat: ["Breakfast", "American"], rating: 4.6, sincerity: 89, ownership: "Independent", format: "Sit-down", hours: "Tue–Sun 7–2 (closed Mon)", phone: "(813) 692-6637", address: "312 E Brandon Blvd, Brandon", cost: 15, opened: "2021", busy: 80, delivery: ["DoorDash", "Uber Eats"], alcohol: "None", sportsTV: false, wait: "15–30 min (weekends longer)", specials: "Chef-inspired southern breakfast & brunch", topDish: "Jesse Bowl or Cali Benny", notes: "Newer local favorite for southern-style breakfast and brunch. Friendly service and solid portions.", website: "https://www.himesbreakfasthouse.com/himes-location-brandon-fl", lat: 27.937787, lng: -82.283251 },
 
       // Chicken / Fast Food
-      { id: 36, name: "Chick-fil-A E. Brandon/Valrico", cat: ["Chicken", "Fast Food", "American"], rating: 4.5, sincerity: 88, ownership: "Corporate", format: "Counter service", hours: "Mon–Sat 6am–10pm (closed Sun)", phone: "(813) 661-2300", address: "1504 E Brandon Blvd, Brandon", cost: 12, opened: "2010s", busy: 85, delivery: ["DoorDash", "Uber Eats"], alcohol: "None", sportsTV: false, wait: "5–15 min (drive-thru longer at peaks)", specials: "Chick-fil-A One rewards; free kids meal promos some nights", topDish: "Chicken Sandwich or Nuggets", notes: "Consistently high sincerity for service and consistency. Closed Sundays. Very popular local favorite.", website: "https://www.chick-fil-a.com/locations/fl/e-brandon-valrico", lat: 27.938394, lng: -82.262917 },
+      { id: 36, name: "Chick-fil-A E. Brandon/Valrico", cat: ["Chicken", "Fast Food", "American"], rating: 4.6, sincerity: 88, ownership: "Corporate", format: "Counter service", hours: "Mon–Sat 6am–10pm (closed Sun)", phone: "(813) 661-2300", address: "1504 E Brandon Blvd, Brandon", cost: 12, opened: "2010s", busy: 85, delivery: ["DoorDash", "Uber Eats"], alcohol: "None", sportsTV: false, wait: "5–15 min (drive-thru longer at peaks)", specials: "Chick-fil-A One rewards; free kids meal promos some nights", topDish: "Chicken Sandwich or Nuggets", notes: "Consistently high sincerity for service and consistency. Closed Sundays. Very popular local favorite.", website: "https://www.chick-fil-a.com/locations/fl/e-brandon-valrico", lat: 27.938394, lng: -82.262917 },
       { id: 37, name: "Zaxby's", cat: ["Chicken", "Fast Food"], rating: 4.0, sincerity: 79, ownership: "Corporate", format: "Counter service", hours: "Daily 10–9:30 or 10", phone: "(813) 657-6363", address: "2028 E Brandon Blvd, Valrico", cost: 13, opened: "2010s", busy: 70, delivery: ["DoorDash", "Uber Eats"], alcohol: "None", sportsTV: false, wait: "8–18 min", specials: "Sauce variety; family meals", topDish: "Chicken Fingerz or Zalad", notes: "Hand-breaded chicken fingers and wings with lots of sauce options. Solid fast-casual chicken.", website: "https://www.zaxbys.com", lat: 27.9378, lng: -82.2300 },
-      { id: 38, name: "Popeyes Louisiana Kitchen", cat: ["Chicken", "Fast Food", "Cajun"], rating: 4.1, sincerity: 80, ownership: "Corporate", format: "Counter service", hours: "Daily ~10am–10/11pm", phone: "(813) 733-0867", address: "515 Brandon Town Center Dr, Brandon", cost: 12, opened: "2010s", busy: 75, delivery: ["DoorDash", "Uber Eats", "Grubhub"], alcohol: "None", sportsTV: false, wait: "8–20 min", specials: "Chicken sandwich & family meals", topDish: "Classic or Spicy Chicken Sandwich / Bone-in chicken", notes: "Famous for spicy Cajun-style fried chicken and the chicken sandwich. Busy at lunch.", website: "https://www.popeyes.com", lat: 27.9385, lng: -82.3250 }
+      { id: 38, name: "Popeyes Louisiana Kitchen", cat: ["Chicken", "Fast Food", "Cajun"], rating: 4.1, sincerity: 80, ownership: "Corporate", format: "Counter service", hours: "Daily ~10am–10/11pm", phone: "(813) 733-0867", address: "515 Brandon Town Center Dr, Brandon", cost: 12, opened: "2010s", busy: 75, delivery: ["DoorDash", "Uber Eats", "Grubhub"], alcohol: "None", sportsTV: false, wait: "8–20 min", specials: "Chicken sandwich & family meals", topDish: "Classic or Spicy Chicken Sandwich / Bone-in chicken", notes: "Famous for spicy Cajun-style fried chicken and the chicken sandwich. Busy at lunch.", website: "https://www.popeyes.com", lat: 27.9385, lng: -82.3250 },
+      { id: 39, name: "Kiwa Asian Kitchen", cat: ["Asian", "Sushi", "Korean"], rating: 4.7, sincerity: 86, ownership: "Independent", format: "Sit-down", hours: "See listing", phone: "(813) 657-6278", address: "2020 W Brandon Blvd #160, Brandon", cost: 22, opened: "2020s", busy: 60, delivery: ["Uber Eats"], alcohol: "Beer & wine", sportsTV: false, wait: "See listing", specials: "See listing", topDish: "Sushi rolls or Korean plates", notes: "Google 4.7★ from 104 reviews (verified Nov 10, 2026). Korean, sushi, and ramen in Brandon Lakes Plaza. Sincerity is provisional pending the app’s own review analysis.", website: "", lat: 27.938472, lng: -82.317756 }
     ];
 
     // ——— Gas stations (Brandon / Valrico area – prices approximate, verify live) ———
@@ -792,6 +796,114 @@ Each card has a <strong>Show on map</strong> button.<br><br>
       return kidsToday(d);
     }
 
+    // Talk of the Town: verified public ratings only (last checked Nov 10, 2026).
+    // Bayesian prior: mean 4.4 with strength 50, so review count matters.
+    const TALK_VERIFIED = "2026-11-10";
+    const TALK_PRIOR_MEAN = 4.4;
+    const TALK_PRIOR_N = 50;
+    const TALK_RATINGS = [
+      { name: "Jerusalem Grill", rating: 4.9, count: 798, source: "Google" },
+      { name: "Josephine's Italian Market", rating: 4.9, count: 444, source: "Google" },
+      { name: "Kanji Sushi & Ramen", rating: 4.8, count: 1152, source: "Google" },
+      { name: "Sushi Ushi", rating: 4.8, count: 951, source: "Google" },
+      { name: "Liang's Bistro", rating: 4.8, count: 745, source: "Google" },
+      { name: "Taqueria la Cañada", rating: 4.8, count: 512, source: "Google" },
+      { name: "The Stein & Vine", rating: 4.7, count: 2585, source: "Google" },
+      { name: "Kiwa Asian Kitchen", rating: 4.7, count: 104, source: "Google" },
+      { name: "Chick-fil-A E. Brandon/Valrico", rating: 4.6, count: 4076, source: "Google" },
+      { name: "Mission BBQ", rating: 4.6, count: 3272, source: "Google" },
+      { name: "Himes Breakfast House", rating: 4.6, count: 467, source: "Google" },
+      { name: "Tibby's New Orleans Kitchen", rating: 4.5, count: 6937, source: "Google" },
+      { name: "Allegria Italiana", rating: 4.5, count: 1144, source: "Google" }
+    ];
+    function isBrandonValricoArea() {
+      if (!userPos) return false;
+      return milesBetween(userPos.lat, userPos.lng, FALLBACK.lat, FALLBACK.lng) <= 25;
+    }
+    function bayesianRating(rating, count) {
+      const v = Math.max(0, Number(count) || 0);
+      const r = Number(rating) || 0;
+      return (v / (v + TALK_PRIOR_N)) * r + (TALK_PRIOR_N / (v + TALK_PRIOR_N)) * TALK_PRIOR_MEAN;
+    }
+    function showTalkOfTheTown() {
+      showView("foodie");
+      document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+      const chip = document.querySelector('.chip[data-cat="talk"]');
+      if (chip) chip.classList.add("active");
+      selectedCat = "talk";
+      scourAndRank();
+    }
+    function renderTalkOfTheTown() {
+      const container = document.getElementById("results");
+      const wrap = document.getElementById("mapWrap");
+      if (!userPos) {
+        wrap.classList.remove("visible");
+        container.innerHTML = `<div class="empty">We need your location first.<br>Tap <strong>Use my location</strong> (and Allow), or enter any US ZIP code above and press Go.</div>`;
+        return;
+      }
+      if (!isBrandonValricoArea()) {
+        wrap.classList.remove("visible");
+        container.innerHTML = `<div class="empty">Talk of the Town is ready for Brandon / Valrico, where we verified public review scores.<br><br>Top-rated rankings for this area are coming soon — we don’t invent ratings for cities we haven’t checked yet.<br><br>Until a live review API is connected, pick <strong>All</strong> (or a cuisine) and tap <strong>Scour Reviews & Rank</strong> to see nearby places from the live map.</div>`;
+        return;
+      }
+      selectedRange = parseFloat(document.getElementById("rangeSelect").value) || 10;
+      const origin = userPos;
+      const rows = [];
+      TALK_RATINGS.forEach(t => {
+        const base = restaurants.find(r => namesMatch(r.name, t.name));
+        if (!base) return;
+        if (!passesKidsFilter(base.name)) return;
+        const dist = milesBetween(origin.lat, origin.lng, base.lat, base.lng);
+        if (dist > selectedRange) return;
+        rows.push({
+          ...base,
+          dist,
+          pubRating: t.rating,
+          pubCount: t.count,
+          pubSource: t.source,
+          pubVerified: TALK_VERIFIED,
+          bayes: bayesianRating(t.rating, t.count)
+        });
+      });
+      rows.sort((a, b) => (b.bayes - a.bayes) || (b.pubCount - a.pubCount));
+      const top = applyCachedPins(rows.slice(0, 10));
+      if (!top.length) {
+        wrap.classList.remove("visible");
+        container.innerHTML = `<div class="empty">No verified Talk of the Town places within ${selectedRange} miles.<br>Try a larger radius.</div>`;
+        return;
+      }
+      const topNote = `<div class="top-note">Talk of the Town · top ${top.length} nearby by verified public ratings (Bayesian-weighted) · last checked Nov 10, 2026</div>`;
+      container.innerHTML = topNote + top.map((r, i) => {
+        const addr = enrichUsAddress(r.address || "");
+        const dir = directionsUrl(r.name, addr, r.lat, r.lng);
+        return `
+        <div class="result-card" data-name="${escHtml(r.name)}" data-address="${escHtml(addr)}" data-lat="${r.lat}" data-lng="${r.lng}" data-dir="${escHtml(dir)}" data-confidence="${escHtml(r.locConfidence || "")}">
+          <div class="card-top">
+            <div class="rank">${i + 1}</div>
+            <div class="name-block">
+              <div class="name">${escHtml(r.name)}</div>
+              <div class="meta">${escHtml((r.cat || []).join(" · "))}</div>
+            </div>
+          </div>
+          <div class="rating-line">
+            <span class="stars">${r.pubRating.toFixed(1)} ★</span>
+            &nbsp;·&nbsp; ${Number(r.pubCount).toLocaleString()} ${escHtml(r.pubSource)} reviews
+          </div>
+          <div class="badges">
+            <span class="badge">${r.dist.toFixed(1)} mi</span>
+            <span class="badge">Verified ${escHtml(r.pubVerified)}</span>
+            ${locBadge(r)}
+          </div>
+          <div class="info-row">📍 <a class="dir-link" href="${escHtml(dir)}" target="_blank" rel="noopener">${escHtml(addr || "See map")}</a></div>
+          ${r.phone && r.phone !== "See listing" ? `<div class="info-row">📞 <a href="tel:${escHtml(String(r.phone).replace(/[^0-9+]/g,""))}">${escHtml(r.phone)}</a></div>` : ""}
+          ${kidsLine(r.name)}
+          <div class="notes">Public ${escHtml(r.pubSource)} rating ${r.pubRating.toFixed(1)} from ${Number(r.pubCount).toLocaleString()} reviews · weighted so places with more reviews rank more fairly · last verified ${escHtml(r.pubVerified)}</div>
+          <button class="map-btn" onclick="showOnMap(${r.lat}, ${r.lng}, '${jsStr(r.name)}', '${jsStr(addr)}')">📍 Show on map</button>
+        </div>`;
+      }).join("");
+      refreshMap(top);
+    }
+
     let locSeq = 0; // bumps on every new location request so stale GPS answers cannot override a ZIP
     // ——— Location logic (never hangs) ———
     function setLocUI(title, detail, isError = false) {
@@ -817,7 +929,10 @@ Each card has a <strong>Show on map</strong> button.<br><br>
     // Friendly place name for coordinates (non-fatal if it fails)
     async function labelForCoords(lat, lng) {
       try {
-        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10`, { headers: { "Accept": "application/json" } });
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 6000);
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10`, { headers: { "Accept": "application/json" }, signal: controller.signal });
+        clearTimeout(timer);
         if (!r.ok) return "";
         const d = await r.json();
         const a = d.address || {};
@@ -893,6 +1008,88 @@ Each card has a <strong>Show on map</strong> button.<br><br>
       selectedRange = parseFloat(document.getElementById("rangeSelect").value) || 10;
     }
 
+    let scourSeq = 0;
+    function withTimeout(promise, ms, label) {
+      return new Promise((resolve, reject) => {
+        let done = false;
+        const t = setTimeout(() => {
+          if (done) return;
+          done = true;
+          reject(new Error(label || ("timeout after " + ms + "ms")));
+        }, ms);
+        Promise.resolve(promise).then(
+          v => { if (done) return; done = true; clearTimeout(t); resolve(v); },
+          e => { if (done) return; done = true; clearTimeout(t); reject(e); }
+        );
+      });
+    }
+    function resetScourBtn() {
+      const btn = document.getElementById("scourBtn");
+      if (!btn) return;
+      btn.disabled = false;
+      btn.textContent = "Scour Reviews & Rank";
+    }
+    const PIN_CACHE_PREFIX = "foodie:pins:";
+    const PIN_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+    function readPinCache(name) {
+      try {
+        const c = JSON.parse(localStorage.getItem(PIN_CACHE_PREFIX + normalizeName(name)) || "null");
+        if (c && Date.now() - c.t < PIN_CACHE_TTL && c.lat != null && c.lng != null) return c;
+      } catch (e) {}
+      return null;
+    }
+    function writePinCache(name, data) {
+      const payload = JSON.stringify({
+        t: Date.now(), lat: data.lat, lng: data.lng,
+        address: data.address || "", locConfidence: data.locConfidence || "high"
+      });
+      try { localStorage.setItem(PIN_CACHE_PREFIX + normalizeName(name), payload); }
+      catch (e) {
+        try {
+          const drop = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.indexOf(PIN_CACHE_PREFIX) === 0) drop.push(k);
+          }
+          drop.forEach(k => localStorage.removeItem(k));
+          localStorage.setItem(PIN_CACHE_PREFIX + normalizeName(name), payload);
+        } catch (e2) {}
+      }
+    }
+    function applyCachedPins(list) {
+      return (list || []).map(r => {
+        const c = readPinCache(r.name);
+        if (!c) return r;
+        const dist = userPos ? milesBetween(userPos.lat, userPos.lng, c.lat, c.lng) : r.dist;
+        return {
+          ...r, lat: c.lat, lng: c.lng, dist,
+          address: hasStreetAddress(c.address) ? c.address : r.address,
+          locConfidence: c.locConfidence || "high",
+          locSource: "cache"
+        };
+      });
+    }
+    async function refinePinsBackground(list, totalInRange, origin, mySeq) {
+      try {
+        const cat = (selectedCat === "talk") ? "all" : selectedCat;
+        const osmList = await withTimeout(
+          fetchOverpassRestaurants(origin.lat, origin.lng, selectedRange, cat),
+          12000,
+          "pin-refine-timeout"
+        );
+        if (mySeq !== scourSeq) return;
+        const merged = mergeLiveCoords(list, osmList || []);
+        merged.forEach(r => {
+          if (r.locSource === "osm" && r.lat != null && r.lng != null) writePinCache(r.name, r);
+        });
+        if (mySeq !== scourSeq) return;
+        if (selectedCat === "talk") return;
+        renderResults(merged, totalInRange);
+      } catch (e) {
+        console.warn("Background pin refine skipped:", e && e.message || e);
+      }
+    }
+
     // ——— Distance helper ———
     function milesBetween(lat1, lng1, lat2, lng2) {
       const R = 3958.8;
@@ -907,110 +1104,116 @@ Each card has a <strong>Show on map</strong> button.<br><br>
     // ——— Ranking (always refreshes with current location + selected range) ———
     function scourAndRank() {
       const btn = document.getElementById("scourBtn");
+      const mySeq = ++scourSeq;
       btn.disabled = true;
       btn.textContent = "Scouring…";
+      const hardTimeout = setTimeout(() => {
+        if (mySeq === scourSeq) resetScourBtn();
+      }, 15000);
+      const finish = () => {
+        clearTimeout(hardTimeout);
+        if (mySeq === scourSeq) resetScourBtn();
+      };
 
-      selectedRange = parseFloat(document.getElementById("rangeSelect").value) || 10;
-      if (!userPos) {
-        document.getElementById("results").innerHTML =
-          `<div class="empty">We need your location first.<br>Tap <strong>Use my location</strong> (and Allow), or enter any US ZIP code above and press Go.</div>`;
-        btn.disabled = false;
-        btn.textContent = "Scour Reviews & Rank";
-        return;
-      }
-      const origin = userPos;
+      try {
+        selectedRange = parseFloat(document.getElementById("rangeSelect").value) || 10;
+        if (!userPos) {
+          document.getElementById("results").innerHTML =
+            `<div class="empty">We need your location first.<br>Tap <strong>Use my location</strong> (and Allow), or enter any US ZIP code above and press Go.</div>`;
+          document.getElementById("mapWrap").classList.remove("visible");
+          finish();
+          return;
+        }
 
-      // 1. Try curated local list first
-      let list = restaurants.filter(r => (selectedCat === "all" || r.cat.includes(selectedCat)) && passesKidsFilter(r.name));
-      list = list.map(r => {
-        const dist = milesBetween(origin.lat, origin.lng, r.lat, r.lng);
-        return { ...r, dist };
-      }).filter(r => r.dist <= selectedRange);
+        if (selectedCat === "talk") {
+          renderTalkOfTheTown();
+          finish();
+          return;
+        }
 
-      list = list.map(r => {
-        const score = (r.sincerity * 0.55) + (r.rating * 8) - (r.dist * 1.8);
-        return { ...r, score };
-      });
-      list.sort((a, b) => b.score - a.score);
+        const origin = userPos;
+        let list = restaurants.filter(r => (selectedCat === "all" || r.cat.includes(selectedCat)) && passesKidsFilter(r.name));
+        list = list.map(r => {
+          const dist = milesBetween(origin.lat, origin.lng, r.lat, r.lng);
+          return { ...r, dist };
+        }).filter(r => r.dist <= selectedRange);
 
-      document.getElementById("mapWrap").classList.remove("visible");
-
-      if (list.length > 0) {
-        // Rich curated rankings, but replace stale hardcoded pins with live OSM
-        // node/entrance coordinates when we can (and never navigate by those old pins).
-        const top5 = list.slice(0, 5).map(flagCuratedConfidence);
-        renderResults(top5, list.length);
-        refreshMap(top5);
-        btn.textContent = "Updating map locations…";
-        fetchOverpassRestaurants(origin.lat, origin.lng, selectedRange, selectedCat)
-          .then(osmList => {
-            const merged = mergeLiveCoords(top5, osmList || []);
-            renderResults(merged, list.length);
-            refreshMap(merged);
-          })
-          .catch(() => {
-            refreshMap(top5);
-          })
-          .finally(() => {
-            btn.disabled = false;
-            btn.textContent = "Scour Reviews & Rank";
-          });
-        return;
-      }
-
-      // No curated restaurants in range → fetch live from OpenStreetMap (Overpass)
-      btn.textContent = "Searching area…";
-      document.getElementById("results").innerHTML =
-        `<div class="empty">Searching nearby restaurants…<br>This can take a few seconds.</div>`;
-      fetchOverpassRestaurants(origin.lat, origin.lng, selectedRange, selectedCat)
-        .then(osmList => {
-          osmList = (osmList || []).filter(r => matchesCategory(r, selectedCat) && passesKidsFilter(r.name));
-          if (!osmList.length) {
-            const kf = document.getElementById("kidsFilter").value;
-            const catTxt = (selectedCat === "all" ? "restaurants" : selectedCat + " places") + (kf === "today" ? " with a kids-eat-free deal today" : kf === "any" ? " with a known kids deal" : "");
-            document.getElementById("results").innerHTML =
-              `<div class="empty">No ${catTxt} found within ${selectedRange} miles of this location.<br>Try a larger radius, another category, or a different ZIP.</div>`;
-            document.getElementById("mapWrap").classList.remove("visible");
-          } else {
-            // Rank with the app's guidelines using what live data provides
-            osmList.forEach(r => { r.score = liveScore(r, selectedRange); });
-            osmList.sort((a, b) => b.score - a.score);
-            renderOsmResults(osmList.slice(0, 10), osmList.length);
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          // Last resort: use small emergency static list for major cities
-          const emergency = (typeof emergencyPlaces !== "undefined" ? emergencyPlaces : [])
-            .map(r => {
-              const dist = milesBetween(origin.lat, origin.lng, r.lat, r.lng);
-              return { ...r, dist, locConfidence: "low" };
-            })
-            .filter(r => r.dist <= selectedRange + 2)
-            .sort((a, b) => a.dist - b.dist)
-            .slice(0, 8);
-
-          if (emergency.length) {
-            renderOsmResults(emergency, emergency.length);
-            // Add a small note that this is fallback data
-            const note = document.createElement("div");
-            note.className = "top-note";
-            note.style.color = "#b45309";
-            note.innerHTML = "Live map data temporarily unavailable – showing curated backup places for this area.";
-            document.getElementById("results").prepend(note);
-          } else {
-            document.getElementById("results").innerHTML =
-              `<div class="empty">Could not reach live map data for this area right now.<br><br>
-              The free map servers are busy or blocked.<br>
-              You can wait a moment and try again, or try a smaller radius (busy cities return a lot of data).<br><br>
-              We’re using free public data sources so occasional outages happen.<br><br>
-              <button class="scour-btn" type="button" onclick="scourAndRank()">Try again</button></div>`;
-          }
-        })
-        .finally(() => {
-          btn.disabled = false;
-          btn.textContent = "Scour Reviews & Rank";
+        list = list.map(r => {
+          const score = (r.sincerity * 0.55) + (r.rating * 8) - (r.dist * 1.8);
+          return { ...r, score };
         });
+        list.sort((a, b) => b.score - a.score);
+
+        document.getElementById("mapWrap").classList.remove("visible");
+
+        if (list.length > 0) {
+          // Show the list and pins immediately from curated results.
+          // Pin refinement (live OSM) runs in the background and must not freeze the button.
+          const top5 = applyCachedPins(list.slice(0, 5).map(flagCuratedConfidence));
+          renderResults(top5, list.length);
+          finish();
+          refinePinsBackground(top5, list.length, origin, mySeq);
+          return;
+        }
+
+        // No curated restaurants in range → fetch live from OpenStreetMap (Overpass)
+        btn.textContent = "Searching area…";
+        document.getElementById("results").innerHTML =
+          `<div class="empty">Searching nearby restaurants…<br>This can take a few seconds.</div>`;
+
+        withTimeout(fetchOverpassRestaurants(origin.lat, origin.lng, selectedRange, selectedCat), 15000, "search-timeout")
+          .then(osmList => {
+            if (mySeq !== scourSeq) return;
+            osmList = (osmList || []).filter(r => matchesCategory(r, selectedCat) && passesKidsFilter(r.name));
+            if (!osmList.length) {
+              const kf = document.getElementById("kidsFilter").value;
+              const catTxt = (selectedCat === "all" ? "restaurants" : selectedCat + " places") + (kf === "today" ? " with a kids-eat-free deal today" : kf === "any" ? " with a known kids deal" : "");
+              document.getElementById("results").innerHTML =
+                `<div class="empty">No ${catTxt} found within ${selectedRange} miles of this location.<br>Try a larger radius, another category, or a different ZIP.</div>`;
+              document.getElementById("mapWrap").classList.remove("visible");
+            } else {
+              osmList.forEach(r => { r.score = liveScore(r, selectedRange); });
+              osmList.sort((a, b) => b.score - a.score);
+              renderOsmResults(osmList.slice(0, 10), osmList.length);
+            }
+          })
+          .catch(err => {
+            if (mySeq !== scourSeq) return;
+            console.warn("Live search failed:", err && err.message || err);
+            const emergency = (typeof emergencyPlaces !== "undefined" ? emergencyPlaces : [])
+              .map(r => {
+                const dist = milesBetween(origin.lat, origin.lng, r.lat, r.lng);
+                return { ...r, dist, locConfidence: "low" };
+              })
+              .filter(r => r.dist <= selectedRange + 2)
+              .sort((a, b) => a.dist - b.dist)
+              .slice(0, 8);
+
+            if (emergency.length) {
+              renderOsmResults(emergency, emergency.length);
+              const note = document.createElement("div");
+              note.className = "top-note";
+              note.style.color = "#b45309";
+              note.innerHTML = "Live map data temporarily unavailable – showing curated backup places for this area.";
+              document.getElementById("results").prepend(note);
+            } else {
+              document.getElementById("results").innerHTML =
+                `<div class="empty">Could not reach live map data for this area right now.<br><br>
+                The free map servers are busy or blocked.<br>
+                You can wait a moment and try again, or try a smaller radius (busy cities return a lot of data).<br><br>
+                We’re using free public data sources so occasional outages happen.<br><br>
+                <button class="scour-btn" type="button" onclick="scourAndRank()">Try again</button></div>`;
+              document.getElementById("mapWrap").classList.remove("visible");
+            }
+          })
+          .finally(finish);
+      } catch (e) {
+        console.error(e);
+        document.getElementById("results").innerHTML =
+          `<div class="empty">Something went wrong while searching.<br><br>
+          <button class="scour-btn" type="button" onclick="scourAndRank()">Try again</button></div>`;
+        finish();
+      }
     }
 
         
@@ -1077,7 +1280,7 @@ Each card has a <strong>Show on map</strong> button.<br><br>
       }
       // out center: a point for buildings (ways). Also pull entrance nodes so pins
       // are not the centroid of a plaza or parking lot.
-      return `[out:json][timeout:25];(${body})->.pois;.pois out center tags qt 400;node(w.pois)["entrance"];out tags;`;
+      return `[out:json][timeout:15];(${body});out center tags qt 400;`;
     }
 
     async function fetchOverpassRestaurants(lat, lng, radiusMiles, cat = "all") {
@@ -1137,37 +1340,37 @@ Each card has a <strong>Show on map</strong> button.<br><br>
     }
 
     async function queryOverpassEndpoints(query, timeoutMs) {
-      const endpoints = [
-        "https://overpass-api.de/api/interpreter",
-        "https://overpass.private.coffee/api/interpreter",
-        "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-        "https://overpass.kumi.systems/api/interpreter"
+      const groups = [
+        ["https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter"],
+        ["https://maps.mail.ru/osm/tools/overpass/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]
       ];
-      const controllers = endpoints.map(() => new AbortController());
-      const attempt = async (url, i) => {
-        const timer = setTimeout(() => controllers[i].abort(), timeoutMs);
+      for (const endpoints of groups) {
+        const controllers = endpoints.map(() => new AbortController());
+        const attempt = async (url, i) => {
+          const timer = setTimeout(() => controllers[i].abort(), timeoutMs);
+          try {
+            const res = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: "data=" + encodeURIComponent(query),
+              signal: controllers[i].signal
+            });
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            const data = await res.json();
+            if (data.remark && /error|timed out|runtime/i.test(data.remark)) throw new Error(data.remark);
+            return { url, elements: data.elements || [] };
+          } finally { clearTimeout(timer); }
+        };
         try {
-          const res = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: "data=" + encodeURIComponent(query),
-            signal: controllers[i].signal
-          });
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          const data = await res.json();
-          if (data.remark && /error|timed out|runtime/i.test(data.remark)) throw new Error(data.remark);
-          return { url, elements: data.elements || [] };
-        } finally { clearTimeout(timer); }
-      };
-      try {
-        const win = await Promise.any(endpoints.map(attempt));
-        controllers.forEach(c => c.abort());
-        return win;
-      } catch (agg) {
-        controllers.forEach(c => c.abort());
-        console.warn("Overpass wave failed", (agg.errors || []).map(e => e.message).join("; "));
-        return null;
+          const win = await withTimeout(Promise.any(endpoints.map(attempt)), timeoutMs + 800, "overpass-wave");
+          controllers.forEach(c => c.abort());
+          if (win) return win;
+        } catch (agg) {
+          controllers.forEach(c => c.abort());
+          console.warn("Overpass wave failed", ((agg && agg.errors) || []).map(e => e.message).join("; ") || (agg && agg.message));
+        }
       }
+      return null;
     }
 
     async function tryOverpass(lat, lng, radiusMiles, cat) {
@@ -1177,11 +1380,11 @@ Each card has a <strong>Show on map</strong> button.<br><br>
       const cached = readOvpCache(cacheKey);
       if (cached) return parseOsmElements(cached, lat, lng, radiusMiles);
 
-      // First wave (25s), then one retry wave (35s) after a short pause — free servers are often busy
-      let win = await queryOverpassEndpoints(query, 25000);
+      // Short waves so a slow server cannot freeze the UI. Overall search is also capped at ~15s.
+      let win = await queryOverpassEndpoints(query, 8000);
       if (!win) {
-        await new Promise(r => setTimeout(r, 1500));
-        win = await queryOverpassEndpoints(query, 35000);
+        await new Promise(r => setTimeout(r, 400));
+        win = await queryOverpassEndpoints(query, 6000);
       }
       if (!win) throw new Error("No Overpass server reachable");
       writeOvpCache(cacheKey, win.elements);
@@ -1511,13 +1714,25 @@ Each card has a <strong>Show on map</strong> button.<br><br>
         bounds.push([r.lat, r.lng]);
       });
 
-      if (bounds.length) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-      setTimeout(() => { map.invalidateSize(); }, 80);
+      const fit = () => {
+        try {
+          map.invalidateSize();
+          if (bounds.length) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+        } catch (e) {}
+      };
+      fit();
+      setTimeout(fit, 80);
+      setTimeout(fit, 280);
       caption.textContent = "Pins match the list below · tap a pin for name, address, and directions";
     }
 
     // Show / focus the map on one restaurant from the current results
     function showOnMap(lat, lng, name, address) {
+      const foodie = document.getElementById("view-foodie");
+      if (foodie && !foodie.classList.contains("active")) {
+        document.querySelectorAll(".view-section").forEach(v => v.classList.remove("active"));
+        foodie.classList.add("active");
+      }
       const wrap = document.getElementById("mapWrap");
       if (!lastMapList.length) {
         refreshMap([{ name: name, address: address || "", lat: lat, lng: lng }]);
@@ -1575,7 +1790,7 @@ Each card has a <strong>Show on map</strong> button.<br><br>
             <div class="card-top">
               <div class="rank">${i + 1}</div>
               <div class="name-block">
-                <div class="name">${r.name}</div>
+                <div class="name">${escHtml(r.name)}</div>
                 <div class="meta">${r.cat.join(" · ")}</div>
               </div>
             </div>
@@ -1607,7 +1822,7 @@ Each card has a <strong>Show on map</strong> button.<br><br>
             </div>
             ${kidsLine(r.name)}
             <div class="notes">${r.notes}</div>
-            <button class="map-btn" onclick="showOnMap(${r.lat}, ${r.lng}, '${String(r.name).replace(/'/g, "\\'")}')">📍 Show on map</button>
+            <button class="map-btn" onclick="showOnMap(${r.lat}, ${r.lng}, '${jsStr(r.name)}', '${jsStr(enrichUsAddress(r.address || ""))}')">📍 Show on map</button>
           </div>
         `;
       }).join("");
@@ -1649,7 +1864,10 @@ Each card has a <strong>Show on map</strong> button.<br><br>
     // ——— ZIP code search (any US ZIP: zippopotam.us, Nominatim fallback) ———
     async function geocodeZip(zip) {
       try {
-        const r = await fetch("https://api.zippopotam.us/us/" + zip);
+        const zpController = new AbortController();
+        const zpTimer = setTimeout(() => zpController.abort(), 8000);
+        const r = await fetch("https://api.zippopotam.us/us/" + zip, { signal: zpController.signal });
+        clearTimeout(zpTimer);
         if (r.ok) {
           const d = await r.json();
           const pl = d.places && d.places[0];
@@ -1657,7 +1875,10 @@ Each card has a <strong>Show on map</strong> button.<br><br>
         }
       } catch (e) { console.warn("zippopotam failed", e.message || e); }
       const url = "https://nominatim.openstreetmap.org/search?postalcode=" + encodeURIComponent(zip) + "&country=US&format=json&limit=1";
-      const res = await fetch(url, { headers: { "Accept": "application/json" } });
+      const nmController = new AbortController();
+      const nmTimer = setTimeout(() => nmController.abort(), 8000);
+      const res = await fetch(url, { headers: { "Accept": "application/json" }, signal: nmController.signal });
+      clearTimeout(nmTimer);
       const data = await res.json();
       if (data && data.length) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), label: (data[0].display_name || "").split(",").slice(0, 3).join(",") };
       return null;
